@@ -1,5 +1,10 @@
 package de.labystudio.game;
 
+import com.badlogic.gdx.Game;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
+import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
+import com.badlogic.gdx.graphics.GL20;
 import de.labystudio.game.player.Player;
 import de.labystudio.game.render.gui.FontRenderer;
 import de.labystudio.game.render.gui.GuiRenderer;
@@ -17,28 +22,25 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GLContext;
 import org.lwjgl.util.glu.GLU;
 
-import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 
-public class Minecraft implements Runnable {
-    protected Canvas canvas;
-    protected Frame frame;
+public class Minecraft extends Game {
+
+    private final Minecraft game;
     protected final GuiRenderer gui = new GuiRenderer();
     // Game
     private final Timer timer = new Timer(20.0F);
     private World world;
     private WorldRenderer worldRenderer;
     private FontRenderer fontRenderer;
-    public static final int DEFAULT_WIDTH = 854;
-    public static final int DEFAULT_HEIGHT = 480;
+    public static final int DEFAULT_WIDTH = 1280;
+    public static final int DEFAULT_HEIGHT = 720;
     public int displayWidth = DEFAULT_WIDTH;
     public int displayHeight = DEFAULT_HEIGHT;
-
     protected boolean fullscreen;
     protected boolean enableVsync;
 
@@ -50,52 +52,13 @@ public class Minecraft implements Runnable {
     private boolean paused = false;
     private boolean running = true;
     private int fps;
-    private Minecraft game;
-    public void init() throws LWJGLException, IOException {
+    private GLContext glContext;
+
+    public Minecraft() {
         this.game = this;
-        // Create canvas
-        this.canvas = new Canvas();
-        this.canvas.setPreferredSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
-
-        // Create frame
-        this.frame = new Frame("3DGame");
-        this.frame.setLayout(new BorderLayout());
-        this.frame.add(this.canvas, "Center");
-        this.frame.pack();
-        this.frame.setLocationRelativeTo(null);
-        this.frame.setVisible(true);
-        // Close listener
-        this.frame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                game.shutdown();
-            }
-        });
-        // Setup display graphics
-        Graphics g = this.canvas.getGraphics();
-        if (g != null) {
-            g.setColor(Color.BLACK);
-            g.fillRect(0, 0, this.displayWidth, this.displayHeight);
-            g.dispose();
-        }
-        Display.setParent(this.canvas);
-
-        // Set display title
-        Display.setTitle(this.frame.getTitle());
-
-        try {
-            Display.create();
-        } catch (LWJGLException lwjglexception) {
-            lwjglexception.printStackTrace();
-
-            // Try again in one second
-            try {
-                Thread.sleep(1000L);
-            } catch (InterruptedException ignored) {
-            }
-
-            Display.create();
-        }
+        glContext = new GLContext();
+    }
+    public void init() throws LWJGLException, IOException {
 
         // Make the OpenGL context current
         Display.makeCurrent();
@@ -116,14 +79,15 @@ public class Minecraft implements Runnable {
         Mouse.setGrabbed(true);
 
         // Initialize gameWindow variable
-       // this.game = new game();
         Display.setFullscreen(this.fullscreen);
 
         Display.swapBuffers();
     }
 
     public void run() {
+
         try {
+            // Initialize game before calling init
             this.init();
         } catch (Exception e) {
             e.printStackTrace();
@@ -163,7 +127,7 @@ public class Minecraft implements Runnable {
 
                 // Toggle fullscreen
                 if (Keyboard.isKeyDown(87)) {
-          //          this.toggleFullscreen();
+                    this.toggleFullscreen();
                 }
 
             } while (!Display.isCloseRequested() && this.running);
@@ -219,7 +183,6 @@ public class Minecraft implements Runnable {
         GL11.glLoadIdentity();
         this.moveCameraToPlayer(partialTicks);
     }
-
 
     public void render(float partialTicks) {
         float mouseMoveX = Mouse.getDX();
@@ -407,8 +370,6 @@ public class Minecraft implements Runnable {
                     this.displayHeight = 1;
                 }
             } else {
-                this.displayWidth = this.canvas.getWidth();
-                this.displayHeight = this.canvas.getHeight();
 
                 if (this.displayWidth <= 0) {
                     this.displayWidth = 1;
@@ -432,10 +393,6 @@ public class Minecraft implements Runnable {
     public void update() {
         Display.update();
 
-        if (!this.fullscreen && (this.canvas.getWidth() != this.displayWidth || this.canvas.getHeight() != this.displayHeight)) {
-            this.displayWidth = this.canvas.getWidth();
-            this.displayHeight = this.canvas.getHeight();
-
             if (this.displayWidth <= 0) {
                 this.displayWidth = 1;
             }
@@ -446,9 +403,13 @@ public class Minecraft implements Runnable {
 
             this.resize(this.displayWidth, this.displayHeight);
         }
+
+    @Override
+    public void create() {
+        run();
     }
 
-    private void resize(int width, int height) {
+    public void resize(int width, int height) {
         if (width <= 0) {
             width = 1;
         }
@@ -464,10 +425,36 @@ public class Minecraft implements Runnable {
 
 
     public static void checkError() {
-        int error = GL11.glGetError();
-        if (error != 0) {
-            throw new IllegalStateException(GLU.gluErrorString(error));
+        int error = Gdx.gl.glGetError();
+        if (error != GL20.GL_NO_ERROR) {
+            String errorMessage = getGLErrorString(error);
+            throw new IllegalStateException(errorMessage);
         }
+    }
+
+    private static String getGLErrorString(int error) {
+        String errorMessage;
+        switch (error) {
+            case GL20.GL_INVALID_ENUM:
+                errorMessage = "GL_INVALID_ENUM";
+                break;
+            case GL20.GL_INVALID_VALUE:
+                errorMessage = "GL_INVALID_VALUE";
+                break;
+            case GL20.GL_INVALID_OPERATION:
+                errorMessage = "GL_INVALID_OPERATION";
+                break;
+            case GL20.GL_INVALID_FRAMEBUFFER_OPERATION:
+                errorMessage = "GL_INVALID_FRAMEBUFFER_OPERATION";
+                break;
+            case GL20.GL_OUT_OF_MEMORY:
+                errorMessage = "GL_OUT_OF_MEMORY";
+                break;
+            default:
+                errorMessage = "Unknown error";
+                break;
+        }
+        return errorMessage;
     }
 
     public static void main(String[] args) throws LWJGLException {
@@ -476,7 +463,13 @@ public class Minecraft implements Runnable {
             System.setProperty("org.lwjgl.librarypath", new File("run/natives").getAbsolutePath());
         }
 
-        new Thread(new Minecraft(), "Game Thread").start();
+        LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
+        config.title = "Im A Block";
+        config.width = DEFAULT_WIDTH;
+        config.height = DEFAULT_HEIGHT;
+        config.vSyncEnabled = false;
+
+       new LwjglApplication(new Minecraft(), config);
     }
 
     public void destroy() {
