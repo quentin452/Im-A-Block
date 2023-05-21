@@ -12,22 +12,13 @@ repositories {
 }
 
 dependencies {
-    /*
     implementation "com.badlogicgames.gdx:gdx:1.11.0"
     implementation "com.badlogicgames.gdx:gdx-box2d:1.11.0"
     implementation "com.badlogicgames.gdx:gdx-ai:1.8.2"
-    implementation 'com.badlogicgames.gdx:gdx-backend-lwjgl:1.11.0'
-    implementation 'com.badlogicgames.gdx:gdx-platform:1.11.0:natives-desktop'
-    implementation "com.badlogicgames.gdx:gdx-freetype:1.11.0"
-    implementation "com.badlogicgames.gdx:gdx-freetype-platform:1.11.0:natives-desktop"
-  */
-    implementation 'org.joml:joml:1.10.5'
-
-    implementation 'org.lwjgl:lwjgl:3.3.2'
-    implementation 'org.lwjgl:lwjgl-glfw:3.3.2'
-    implementation 'org.lwjgl:lwjgl-opengl:3.3.2'
-    implementation 'org.lwjgl:lwjgl-stb:3.3.2'
-
+    implementation 'com.badlogicgames.gdx:gdx-backend-lwjgl:1.9.12'
+    implementation 'com.badlogicgames.gdx:gdx-platform:1.9.12:natives-desktop'
+    implementation "com.badlogicgames.gdx:gdx-freetype:1.9.12"
+    implementation "com.badlogicgames.gdx:gdx-freetype-platform:1.9.12:natives-desktop"
     // NBT
     implementation 'com.github.Steveice10:opennbt:1.3'
 }

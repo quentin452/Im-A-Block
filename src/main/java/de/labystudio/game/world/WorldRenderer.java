@@ -8,7 +8,6 @@ import de.labystudio.game.util.TextureManager;
 import de.labystudio.game.world.chunk.Chunk;
 import de.labystudio.game.world.chunk.ChunkSection;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
@@ -50,15 +49,15 @@ public class WorldRenderer {
     public void setupFog(boolean inWater) {
         if (inWater) {
             GL11.glFogi(GL11.GL_FOG_MODE, GL11.GL_EXP);
-            GL11.glFogf(GL11.GL_FOG_DENSITY, 0.1F); // Fog density
-            GL11.glFogfv(GL11.GL_FOG_COLOR, this.putColor(0.2F, 0.2F, 0.4F, 1.0F));
+            GL11.glFogf(GL11.GL_FOG_DENSITY, 0.1F); // Fog distance
+            GL11.glFog(GL11.GL_FOG_COLOR, this.putColor(0.2F, 0.2F, 0.4F, 1.0F));
         } else {
             int viewDistance = WorldRenderer.RENDER_DISTANCE * ChunkSection.SIZE;
 
             GL11.glFogi(GL11.GL_FOG_MODE, GL11.GL_LINEAR);
             GL11.glFogf(GL11.GL_FOG_START, viewDistance / 4.0F); // Fog start
             GL11.glFogf(GL11.GL_FOG_END, viewDistance); // Fog end
-            GL11.glFogfv(GL11.GL_FOG_COLOR, this.putColor(0.6222222F - 0.05F, 0.5F + 0.1F, 1.0F, 1.0F));
+            GL11.glFog(GL11.GL_FOG_COLOR, this.putColor(0.6222222F - 0.05F, 0.5F + 0.1F, 1.0F, 1.0F));
         }
     }
 

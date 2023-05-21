@@ -3,7 +3,8 @@ package de.labystudio.game.player;
 import de.labystudio.game.util.BoundingBox;
 import de.labystudio.game.world.World;
 import de.labystudio.game.world.block.Block;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.input.Keyboard;
+
 import java.util.List;
 
 public class Player {
@@ -304,34 +305,33 @@ public class Player {
         boolean jumping = false;
         boolean sneaking = false;
 
-        long window = GLFW.glfwGetCurrentContext();
-
-        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_R) == GLFW.GLFW_PRESS) {
+        // controls #todo important
+        if (Keyboard.isKeyDown(19)) { // R
             this.resetPos();
         }
-        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_W) == GLFW.GLFW_PRESS) {
+        if ((Keyboard.isKeyDown(200)) || (Keyboard.isKeyDown(17))) { // W
             moveForward++;
         }
-        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_S) == GLFW.GLFW_PRESS) {
+        if ((Keyboard.isKeyDown(208)) || (Keyboard.isKeyDown(31))) { // S
             moveForward--;
         }
-        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_A) == GLFW.GLFW_PRESS) {
+        if ((Keyboard.isKeyDown(203)) || (Keyboard.isKeyDown(30))) { // A
             moveStrafe++;
         }
-        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_D) == GLFW.GLFW_PRESS) {
+        if ((Keyboard.isKeyDown(205)) || (Keyboard.isKeyDown(32))) { // D
             moveStrafe--;
         }
-        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_SPACE) == GLFW.GLFW_PRESS) {
+        if ((Keyboard.isKeyDown(57)) || (Keyboard.isKeyDown(219))) { // Space
             jumping = true;
         }
-        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS) {
+        if (Keyboard.isKeyDown(42)) { // Shift
             if (this.moveForward > 0 && !this.sneaking && !this.sprinting && this.motionX != 0 && this.motionZ != 0) {
                 this.sprinting = true;
 
                 this.updateFOVModifier();
             }
         }
-        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Q) == GLFW.GLFW_PRESS) {
+        if (Keyboard.isKeyDown(16)) { // Q
             sneaking = true;
         }
 
