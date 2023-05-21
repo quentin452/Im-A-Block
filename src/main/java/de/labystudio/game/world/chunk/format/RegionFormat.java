@@ -64,7 +64,7 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
-public class RegionFormat {
+public class RegionFormat implements AutoCloseable {
 
     private static final int VERSION_GZIP = 1;
     private static final int VERSION_DEFLATE = 2;
@@ -73,7 +73,7 @@ public class RegionFormat {
     private static final int SECTOR_INTS = SECTOR_BYTES / 4;
 
     static final int CHUNK_HEADER_SIZE = 5;
-    private static final byte emptySector[] = new byte[4096];
+    private static final byte[] emptySector = new byte[4096];
 
     private final File fileName;
     private RandomAccessFile file;
@@ -193,62 +193,64 @@ public class RegionFormat {
      * gets an (uncompressed) stream representing the chunk data returns null if
      * the chunk is not found or an error occurs
      */
-    public synchronized DataInputStream getChunkDataInputStream( int x, int z ) {
-        if ( outOfBounds( x, z ) ) {
-            debugln( "READ", x, z, "out of bounds" );
+    public synchronized DataInputStream getChunkDataInputStream(int x, int z) {
+        if (outOfBounds(x, z)) {
+            debugln("READ", x, z, "out of bounds");
             return null;
         }
 
         try {
-            int offset = getOffset( x, z );
-            if ( offset == 0 ) {
-                // debugln("READ", x, z, "miss");
+            int offset = getOffset(x, z);
+            if (offset == 0) {
                 return null;
             }
 
             int sectorNumber = offset >> 8;
             int numSectors = offset & 0xFF;
 
-            if ( sectorNumber + numSectors > sectorFree.size() ) {
-                debugln( "READ", x, z, "invalid sector" );
+            if (sectorNumber + numSectors > sectorFree.size()) {
+                debugln("READ", x, z, "invalid sector");
                 return null;
             }
 
-            file.seek( sectorNumber * SECTOR_BYTES );
+            file.seek(sectorNumber * SECTOR_BYTES);
             int length = file.readInt();
 
-            if ( length > SECTOR_BYTES * numSectors ) {
-                debugln( "READ", x, z, "invalid length: " + length + " > 4096 * " + numSectors );
+            if (length > SECTOR_BYTES * numSectors) {
+                debugln("READ", x, z, "invalid length: " + length + " > 4096 * " + numSectors);
                 return null;
             }
 
             byte version = file.readByte();
-            if ( version == VERSION_GZIP ) {
+            if (version == VERSION_GZIP) {
                 byte[] data = new byte[length - 1];
-                file.read( data );
-                DataInputStream ret = new DataInputStream( new GZIPInputStream( new ByteArrayInputStream( data ) ) );
-                // debug("READ", x, z, " = found");
-                return ret;
-            } else if ( version == VERSION_DEFLATE ) {
+                file.read(data);
+                return new DataInputStream(new GZIPInputStream(new ByteArrayInputStream(data)));
+            } else if (version == VERSION_DEFLATE) {
                 byte[] data = new byte[length - 1];
-                file.read( data );
-                DataInputStream ret = new DataInputStream( new InflaterInputStream( new ByteArrayInputStream( data ) ) );
-                // debug("READ", x, z, " = found");
-                return ret;
+                file.read(data);
+                return new DataInputStream(new InflaterInputStream(new ByteArrayInputStream(data)));
             }
 
-            debugln( "READ", x, z, "unknown version " + version );
+            debugln("READ", x, z, "unknown version " + version);
             return null;
-        } catch ( IOException e ) {
-            debugln( "READ", x, z, "exception" );
+        } catch (IOException e) {
+            debugln("READ", x, z, "exception");
             return null;
         }
     }
 
-    public DataOutputStream getChunkDataOutputStream( int x, int z ) {
-        if ( outOfBounds( x, z ) ) return null;
+    public DataOutputStream getChunkDataOutputStream(int x, int z) {
+        if (outOfBounds(x, z)) return null;
 
-        return new DataOutputStream( new DeflaterOutputStream( new ChunkBuffer( x, z ) ) );
+        return new DataOutputStream(new DeflaterOutputStream(new ChunkBuffer(x, z)));
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (file != null) {
+            file.close();
+        }
     }
 
     /*
@@ -377,10 +379,6 @@ public class RegionFormat {
         chunkTimestamps[x + z * 32] = value;
         file.seek( SECTOR_BYTES + ( x + z * 32 ) * 4 );
         file.writeInt( value );
-    }
-
-    public void close( ) throws IOException {
-        file.close();
     }
 
     public static String getFileName( int x, int z ) {
