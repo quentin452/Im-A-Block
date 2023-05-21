@@ -21,6 +21,7 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
+import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
 import org.lwjgl.util.glu.GLU;
@@ -37,8 +38,8 @@ public class Minecraft extends Game {
     private World world;
     private WorldRenderer worldRenderer;
     private FontRenderer fontRenderer;
-    public static final int DEFAULT_WIDTH = 1280;
-    public static final int DEFAULT_HEIGHT = 720;
+    public int DEFAULT_WIDTH = 1280;
+    public int DEFAULT_HEIGHT = 720;
     public int displayWidth = DEFAULT_WIDTH;
     public int displayHeight = DEFAULT_HEIGHT;
     protected boolean fullscreen;
@@ -59,9 +60,13 @@ public class Minecraft extends Game {
         glContext = new GLContext();
     }
     public void init() throws LWJGLException, IOException {
-
         // Make the OpenGL context current
         Display.makeCurrent();
+
+        // Get the best available resolution from the display
+        DisplayMode desktopDisplayMode = Display.getDesktopDisplayMode();
+        this.displayWidth = Display.getWidth();
+        this.displayHeight = Display.getWidth();
 
         // Setup display
         this.gui.init(this.game);
@@ -82,6 +87,7 @@ public class Minecraft extends Game {
         Display.setFullscreen(this.fullscreen);
 
         Display.swapBuffers();
+
     }
 
     public void run() {
@@ -102,9 +108,6 @@ public class Minecraft extends Game {
                 for (int i = 0; i < this.timer.ticks; i++) {
                     this.tick();
                 }
-
-                // Limit framerate
-                //Thread.sleep(5L);
 
                 GL11.glViewport(0, 0, this.game.displayWidth, this.game.displayHeight);
                 this.render(this.timer.partialTicks);
@@ -177,10 +180,15 @@ public class Minecraft extends Game {
 
         GL11.glMatrixMode(GL11.GL_PROJECTION);
         GL11.glLoadIdentity();
-        GLU.gluPerspective(85.0F + this.player.getFOVModifier(),
-                (float) this.game.displayWidth / (float) this.game.displayHeight, 0.05F, (float) zFar);
+
+        // Calculate the aspect ratio
+        float aspectRatio = (float) this.game.displayWidth / (float) this.game.displayHeight;
+
+        GLU.gluPerspective(85.0F + this.player.getFOVModifier(), aspectRatio, 0.05F, (float) zFar);
+
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glLoadIdentity();
+
         this.moveCameraToPlayer(partialTicks);
     }
 
@@ -354,55 +362,53 @@ public class Minecraft extends Game {
     public void toggleFullscreen() {
         try {
             this.fullscreen = !this.fullscreen;
-
-            System.out.println("Toggle fullscreen!");
+            LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 
             if (this.fullscreen) {
-                Display.setDisplayMode(Display.getDesktopDisplayMode());
-
-                this.displayWidth = Display.getDisplayMode().getWidth();
-                this.displayHeight = Display.getDisplayMode().getHeight();
-
-                if (this.displayWidth <= 0) {
-                    this.displayWidth = 1;
-                }
-                if (this.displayHeight <= 0) {
-                    this.displayHeight = 1;
-                }
+              //  config.setFromDisplayMode(Display.getDesktopDisplayMode());
+                config.fullscreen = true;
             } else {
-
-                if (this.displayWidth <= 0) {
-                    this.displayWidth = 1;
-                }
-                if (this.displayHeight <= 0) {
-                    this.displayHeight = 1;
-                }
-
-                Display.setDisplayMode(new org.lwjgl.opengl.DisplayMode(DEFAULT_WIDTH, DEFAULT_HEIGHT));
+                config.width = DEFAULT_WIDTH;
+                config.height = DEFAULT_HEIGHT;
             }
 
-            Display.setFullscreen(this.fullscreen);
-            Display.update();
+            // Get the best available resolution from the display
+            org.lwjgl.opengl.DisplayMode desktopDisplayMode = Display.getDesktopDisplayMode();
+            int displayWidth = Display.getWidth();
+            int displayHeight = Display.getWidth();
 
-            Thread.sleep(1000L);
-            System.out.println("Size: " + this.displayWidth + ", " + this.displayHeight);
+            // Set the resolution based on the actual display capabilities
+            if (displayWidth > 0 && displayHeight > 0) {
+                config.width = displayWidth;
+                config.height = displayHeight;
+            }
+
+            new LwjglApplication(this, config);
         } catch (Exception exception) {
             exception.printStackTrace();
         }
     }
+
     public void update() {
         Display.update();
 
-            if (this.displayWidth <= 0) {
-                this.displayWidth = 1;
-            }
+        int width = Display.getWidth();
+        int height = Display.getHeight();
 
-            if (this.displayHeight <= 0) {
-                this.displayHeight = 1;
-            }
-
-            this.resize(this.displayWidth, this.displayHeight);
+        if (width <= 0) {
+            width = 1;
         }
+        if (height <= 0) {
+            height = 1;
+        }
+
+        // Update the display width and height
+        this.displayWidth = width;
+        this.displayHeight = height;
+
+        // Resize the window
+        this.resize(this.displayWidth, this.displayHeight);
+    }
 
     @Override
     public void create() {
@@ -422,7 +428,6 @@ public class Minecraft extends Game {
 
         this.game.gui.init(this);
     }
-
 
     public static void checkError() {
         int error = Gdx.gl.glGetError();
@@ -465,8 +470,8 @@ public class Minecraft extends Game {
 
         LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
         config.title = "Im A Block";
-        config.width = DEFAULT_WIDTH;
-        config.height = DEFAULT_HEIGHT;
+        config.width = 1280;
+        config.height = 720;
         config.vSyncEnabled = false;
 
        new LwjglApplication(new Minecraft(), config);
