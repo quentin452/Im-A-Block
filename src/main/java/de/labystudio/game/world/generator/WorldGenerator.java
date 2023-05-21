@@ -7,6 +7,8 @@ import de.labystudio.game.world.generator.noise.NoiseGeneratorCombined;
 import de.labystudio.game.world.generator.noise.NoiseGeneratorOctaves;
 
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public final class WorldGenerator {
 
@@ -48,42 +50,43 @@ public final class WorldGenerator {
     }
 
     public void generateChunk(int chunkX, int chunkZ) {
-        // For each block in the chunk
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
         for (int relX = 0; relX < ChunkSection.SIZE; relX++) {
-            for (int relZ = 0; relZ < ChunkSection.SIZE; relZ++) {
+            final int x = chunkX * ChunkSection.SIZE + relX;
 
-                // Absolute position of the block
-                int x = chunkX * ChunkSection.SIZE + relX;
-                int z = chunkZ * ChunkSection.SIZE + relZ;
+            executor.execute(() -> {
+                for (int relZ = 0; relZ < ChunkSection.SIZE; relZ++) {
+                    int z = chunkZ * ChunkSection.SIZE + relZ;
 
-                // Extract height value of the noise
-                double heightValue = this.groundHeightNoise.perlin(x, z);
-                double hillValue = Math.max(0, this.hillNoise.perlin(x / 18d, z / 18d) * 6);
+                    // Extract height value of the noise
+                    double heightValue = groundHeightNoise.perlin(x, z);
+                    double hillValue = Math.max(0, hillNoise.perlin(x / 18d, z / 18d) * 6);
 
-                // Calculate final height for this position
-                int groundHeightY = (int) (heightValue / 10 + this.waterLevel + hillValue);
+                    // Calculate final height for this position
+                    int groundHeightY = (int) (heightValue / 10 + waterLevel + hillValue);
 
-                if (groundHeightY < this.waterLevel) {
-                    // Generate water
-                    for (int y = 0; y <= this.waterLevel; y++) {
-                        // Use noise to place sand in water
-                        boolean sandInWater = this.sandInWaterNoise.perlin(x, z) < 0;
-                        Block block = y > groundHeightY ? Block.WATER : groundHeightY - y < 3 && sandInWater ? Block.SAND : Block.STONE;
+                    if (groundHeightY < waterLevel) {
+                        // Generate water
+                        for (int y = 0; y <= waterLevel; y++) {
+                            // Use noise to place sand in water
+                            boolean sandInWater = sandInWaterNoise.perlin(x, z) < 0;
+                            Block block = y > groundHeightY ? Block.WATER : (groundHeightY - y < 3 && sandInWater) ? Block.SAND : Block.STONE;
 
-                        // Send water, sand and stone
-                        this.world.setBlockAt(x, y, z, block.getId());
+                            // Send water, sand, and stone
+                            world.setBlockAt(x, y, z, block.getId());
+                        }
+                    } else {
+                        // Generate height, the highest block is grass
+                        for (int y = 0; y <= groundHeightY; y++) {
+                            // Use the height map to determine the start of the water by shifting it
+                            boolean isBeach = heightValue < 5 && y < waterLevel + 2;
+                            Block block = (y == groundHeightY) ? (isBeach ? Block.SAND : Block.GRASS) : (groundHeightY - y < 3) ? Block.DIRT : Block.STONE;
+
+                            // Set sand, grass, dirt, and stone
+                            world.setBlockAt(x, y, z, block.getId());
+                        }
                     }
-                } else {
-                    // Generate height, the highest block is grass
-                    for (int y = 0; y <= groundHeightY; y++) {
-                        // Use the height map to determine the start of the water by shifting it
-                        boolean isBeach = heightValue < 5 && y < this.waterLevel + 2;
-                        Block block = y == groundHeightY ? isBeach ? Block.SAND : Block.GRASS : groundHeightY - y < 3 ? Block.DIRT : Block.STONE;
-
-                        // Set sand, grass, dirt and stone
-                        this.world.setBlockAt(x, y, z, block.getId());
-                    }
-                }
 
                 /*
                 int holeY = (int) (this.holeNouse.perlin(-x / 20F, -z / 20F) * 3F + this.waterLevel + 10);
@@ -120,73 +123,88 @@ public final class WorldGenerator {
                     }
                 }
 
+
                 // Caves
-            }
+                }
+            });
+        }
+
+        executor.shutdown();
+        while (!executor.isTerminated()) {
+            // Wait for all tasks to complete
         }
     }
 
     public void populateChunk(int chunkX, int chunkZ) {
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
         for (int index = 0; index < 10; index++) {
-            int x = this.random.nextInt(ChunkSection.SIZE);
-            int z = this.random.nextInt(ChunkSection.SIZE);
+            executor.execute(() -> {
+                int x = random.nextInt(ChunkSection.SIZE);
+                int z = random.nextInt(ChunkSection.SIZE);
 
-            // Absolute position of the block
-            int absoluteX = chunkX * ChunkSection.SIZE + x;
-            int absoluteZ = chunkZ * ChunkSection.SIZE + z;
+                // Absolute position of the block
+                int absoluteX = chunkX * ChunkSection.SIZE + x;
+                int absoluteZ = chunkZ * ChunkSection.SIZE + z;
 
-            // Use noise for a forest pattern
-            double perlin = this.forestNoise.perlin(absoluteX * 10, absoluteZ * 10);
-            if (perlin > 0 && this.random.nextInt(2) == 0) {
+                // Use noise for a forest pattern
+                double perlin = forestNoise.perlin(absoluteX * 10, absoluteZ * 10);
+                if (perlin > 0 && random.nextInt(2) == 0) {
 
-                // Get highest block at this position
-                int highestY = this.world.getHighestBlockYAt(absoluteX, absoluteZ);
+                    // Get highest block at this position
+                    int highestY = world.getHighestBlockYAt(absoluteX, absoluteZ);
 
-                // Don't place a tree if there is no grass
-                if (this.world.getBlockAt(absoluteX, highestY, absoluteZ) == Block.GRASS.getId()
-                        && this.world.getBlockAt(absoluteX, highestY + 1, absoluteZ) == 0) {
-                    int treeHeight = this.random.nextInt(2) + 5;
+                    // Don't place a tree if there is no grass
+                    if (world.getBlockAt(absoluteX, highestY, absoluteZ) == Block.GRASS.getId()
+                            && world.getBlockAt(absoluteX, highestY + 1, absoluteZ) == 0) {
+                        int treeHeight = random.nextInt(2) + 5;
 
-                    // Create tree log
-                    for (int i = 0; i < treeHeight; i++) {
-                        this.world.setBlockAt(absoluteX, highestY + i + 1, absoluteZ, Block.LOG.getId());
-                    }
+                        // Create tree log
+                        for (int i = 0; i < treeHeight; i++) {
+                            world.setBlockAt(absoluteX, highestY + i + 1, absoluteZ, Block.LOG.getId());
+                        }
 
-                    // Create big leave ring
-                    for (int tx = -2; tx <= 2; tx++) {
-                        for (int ty = 0; ty < 2; ty++) {
-                            for (int tz = -2; tz <= 2; tz++) {
-                                boolean isCorner = Math.abs(tx) == 2 && Math.abs(tz) == 2;
-                                if (isCorner && this.random.nextBoolean()) {
-                                    continue;
-                                }
+                        // Create big leave ring
+                        for (int tx = -2; tx <= 2; tx++) {
+                            for (int ty = 0; ty < 2; ty++) {
+                                for (int tz = -2; tz <= 2; tz++) {
+                                    boolean isCorner = Math.abs(tx) == 2 && Math.abs(tz) == 2;
+                                    if (isCorner && random.nextBoolean()) {
+                                        continue;
+                                    }
 
-                                // Place leave if there is no block yet
-                                if (!this.world.isSolidBlockAt(absoluteX + tx, highestY + treeHeight + ty - 2, absoluteZ + tz)) {
-                                    this.world.setBlockAt(absoluteX + tx, highestY + treeHeight + ty - 2, absoluteZ + tz, Block.LEAVE.getId());
+                                    // Place leave if there is no block yet
+                                    if (!world.isSolidBlockAt(absoluteX + tx, highestY + treeHeight + ty - 2, absoluteZ + tz)) {
+                                        world.setBlockAt(absoluteX + tx, highestY + treeHeight + ty - 2, absoluteZ + tz, Block.LEAVE.getId());
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    // Create small leave ring on top
-                    for (int tx = -1; tx <= 1; tx++) {
-                        for (int ty = 0; ty < 2; ty++) {
-                            for (int tz = -1; tz <= 1; tz++) {
-                                boolean isCorner = Math.abs(tx) == 1 && Math.abs(tz) == 1;
-                                if (isCorner && (ty == 1 || this.random.nextBoolean())) {
-                                    continue;
-                                }
+                        // Create small leave ring on top
+                        for (int tx = -1; tx <= 1; tx++) {
+                            for (int ty = 0; ty < 2; ty++) {
+                                for (int tz = -1; tz <= 1; tz++) {
+                                    boolean isCorner = Math.abs(tx) == 1 && Math.abs(tz) == 1;
+                                    if (isCorner && (ty == 1 || random.nextBoolean())) {
+                                        continue;
+                                    }
 
-                                // Place leave if there is no block yet
-                                if (!this.world.isSolidBlockAt(absoluteX + tx, highestY + treeHeight + ty, absoluteZ + tz)) {
-                                    this.world.setBlockAt(absoluteX + tx, highestY + treeHeight + ty, absoluteZ + tz, Block.LEAVE.getId());
+                                    // Place leave if there is no block yet
+                                    if (!world.isSolidBlockAt(absoluteX + tx, highestY + treeHeight + ty, absoluteZ + tz)) {
+                                        world.setBlockAt(absoluteX + tx, highestY + treeHeight + ty, absoluteZ + tz, Block.LEAVE.getId());
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
+            });
         }
 
+        executor.shutdown();
+        while (!executor.isTerminated()) {
+            // Wait for all tasks to complete
+        }
     }
 }

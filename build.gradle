@@ -12,10 +12,13 @@ repositories {
 }
 
 dependencies {
-    implementation group: 'org.lwjgl.lwjgl', name: 'lwjgl', version: '2.9.3'
-    implementation group: 'org.lwjgl.lwjgl', name: 'lwjgl_util', version: '2.9.3'
-    implementation group: 'org.lwjgl.lwjgl', name: 'lwjgl-platform', version: '2.9.3', ext: 'pom'
-
+    implementation "com.badlogicgames.gdx:gdx:1.11.0"
+    implementation "com.badlogicgames.gdx:gdx-box2d:1.11.0"
+    implementation "com.badlogicgames.gdx:gdx-ai:1.8.2"
+    implementation 'com.badlogicgames.gdx:gdx-backend-lwjgl:1.9.12'
+    implementation 'com.badlogicgames.gdx:gdx-platform:1.9.12:natives-desktop'
+    implementation "com.badlogicgames.gdx:gdx-freetype:1.9.12"
+    implementation "com.badlogicgames.gdx:gdx-freetype-platform:1.9.12:natives-desktop"
     // NBT
     implementation 'com.github.Steveice10:opennbt:1.3'
 }
