@@ -336,7 +336,7 @@ public class Minecraft implements Runnable {
     public static void main(String[] args) throws LWJGLException {
         // Set library path if not available
         if (System.getProperty("org.lwjgl.librarypath") == null) {
-            System.setProperty("org.lwjgl.librarypath", new File("natives").getAbsolutePath());
+            System.setProperty("org.lwjgl.librarypath", new File("run/natives").getAbsolutePath());
         }
 
         new Thread(new Minecraft(), "Game Thread").start();
