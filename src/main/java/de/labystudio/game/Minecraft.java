@@ -19,19 +19,28 @@ import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
 
+import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 
 public class Minecraft implements Runnable {
-
-    private final MinecraftWindow gameWindow = new MinecraftWindow(this);
+    protected Canvas canvas;
+    protected Frame frame;
     protected final GuiRenderer gui = new GuiRenderer();
-
     // Game
     private final Timer timer = new Timer(20.0F);
     private World world;
     private WorldRenderer worldRenderer;
     private FontRenderer fontRenderer;
+    public static final int DEFAULT_WIDTH = 854;
+    public static final int DEFAULT_HEIGHT = 480;
+    public int displayWidth = DEFAULT_WIDTH;
+    public int displayHeight = DEFAULT_HEIGHT;
+
+    protected boolean fullscreen;
+    protected boolean enableVsync;
 
     // Player
     private Player player;
@@ -41,11 +50,58 @@ public class Minecraft implements Runnable {
     private boolean paused = false;
     private boolean running = true;
     private int fps;
-
+    private Minecraft game;
     public void init() throws LWJGLException, IOException {
+        this.game = this;
+        // Create canvas
+        this.canvas = new Canvas();
+        this.canvas.setPreferredSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
+
+        // Create frame
+        this.frame = new Frame("3DGame");
+        this.frame.setLayout(new BorderLayout());
+        this.frame.add(this.canvas, "Center");
+        this.frame.pack();
+        this.frame.setLocationRelativeTo(null);
+        this.frame.setVisible(true);
+        // Close listener
+        this.frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                game.shutdown();
+            }
+        });
+        // Setup display graphics
+        Graphics g = this.canvas.getGraphics();
+        if (g != null) {
+            g.setColor(Color.BLACK);
+            g.fillRect(0, 0, this.displayWidth, this.displayHeight);
+            g.dispose();
+        }
+        Display.setParent(this.canvas);
+
+        // Set display title
+        Display.setTitle(this.frame.getTitle());
+
+        try {
+            Display.create();
+        } catch (LWJGLException lwjglexception) {
+            lwjglexception.printStackTrace();
+
+            // Try again in one second
+            try {
+                Thread.sleep(1000L);
+            } catch (InterruptedException ignored) {
+            }
+
+            Display.create();
+        }
+
+        // Make the OpenGL context current
+        Display.makeCurrent();
+
         // Setup display
-        this.gameWindow.init();
-        this.gui.init(this.gameWindow);
+        this.gui.init(this.game);
         this.gui.loadTextures();
 
         // Setup rendering
@@ -58,6 +114,12 @@ public class Minecraft implements Runnable {
         Keyboard.create();
         Mouse.create();
         Mouse.setGrabbed(true);
+
+        // Initialize gameWindow variable
+       // this.game = new game();
+        Display.setFullscreen(this.fullscreen);
+
+        Display.swapBuffers();
     }
 
     public void run() {
@@ -80,9 +142,9 @@ public class Minecraft implements Runnable {
                 // Limit framerate
                 //Thread.sleep(5L);
 
-                GL11.glViewport(0, 0, this.gameWindow.displayWidth, this.gameWindow.displayHeight);
+                GL11.glViewport(0, 0, this.game.displayWidth, this.game.displayHeight);
                 this.render(this.timer.partialTicks);
-                this.gameWindow.update();
+                this.update();
                 checkError();
 
                 frames++;
@@ -101,7 +163,7 @@ public class Minecraft implements Runnable {
 
                 // Toggle fullscreen
                 if (Keyboard.isKeyDown(87)) {
-                    this.gameWindow.toggleFullscreen();
+          //          this.toggleFullscreen();
                 }
 
             } while (!Display.isCloseRequested() && this.running);
@@ -110,7 +172,7 @@ public class Minecraft implements Runnable {
         } finally {
             // Shutdown
             this.world.save();
-            this.gameWindow.destroy();
+            this.game.destroy();
 
             Mouse.destroy();
             Keyboard.destroy();
@@ -152,7 +214,7 @@ public class Minecraft implements Runnable {
         GL11.glMatrixMode(GL11.GL_PROJECTION);
         GL11.glLoadIdentity();
         GLU.gluPerspective(85.0F + this.player.getFOVModifier(),
-                (float) this.gameWindow.displayWidth / (float) this.gameWindow.displayHeight, 0.05F, (float) zFar);
+                (float) this.game.displayWidth / (float) this.game.displayHeight, 0.05F, (float) zFar);
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glLoadIdentity();
         this.moveCameraToPlayer(partialTicks);
@@ -326,6 +388,81 @@ public class Minecraft implements Runnable {
         return null;
     }
 
+    public void toggleFullscreen() {
+        try {
+            this.fullscreen = !this.fullscreen;
+
+            System.out.println("Toggle fullscreen!");
+
+            if (this.fullscreen) {
+                Display.setDisplayMode(Display.getDesktopDisplayMode());
+
+                this.displayWidth = Display.getDisplayMode().getWidth();
+                this.displayHeight = Display.getDisplayMode().getHeight();
+
+                if (this.displayWidth <= 0) {
+                    this.displayWidth = 1;
+                }
+                if (this.displayHeight <= 0) {
+                    this.displayHeight = 1;
+                }
+            } else {
+                this.displayWidth = this.canvas.getWidth();
+                this.displayHeight = this.canvas.getHeight();
+
+                if (this.displayWidth <= 0) {
+                    this.displayWidth = 1;
+                }
+                if (this.displayHeight <= 0) {
+                    this.displayHeight = 1;
+                }
+
+                Display.setDisplayMode(new org.lwjgl.opengl.DisplayMode(DEFAULT_WIDTH, DEFAULT_HEIGHT));
+            }
+
+            Display.setFullscreen(this.fullscreen);
+            Display.update();
+
+            Thread.sleep(1000L);
+            System.out.println("Size: " + this.displayWidth + ", " + this.displayHeight);
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+    }
+    public void update() {
+        Display.update();
+
+        if (!this.fullscreen && (this.canvas.getWidth() != this.displayWidth || this.canvas.getHeight() != this.displayHeight)) {
+            this.displayWidth = this.canvas.getWidth();
+            this.displayHeight = this.canvas.getHeight();
+
+            if (this.displayWidth <= 0) {
+                this.displayWidth = 1;
+            }
+
+            if (this.displayHeight <= 0) {
+                this.displayHeight = 1;
+            }
+
+            this.resize(this.displayWidth, this.displayHeight);
+        }
+    }
+
+    private void resize(int width, int height) {
+        if (width <= 0) {
+            width = 1;
+        }
+        if (height <= 0) {
+            height = 1;
+        }
+
+        this.displayWidth = width;
+        this.displayHeight = height;
+
+        this.game.gui.init(this);
+    }
+
+
     public static void checkError() {
         int error = GL11.glGetError();
         if (error != 0) {
@@ -340,5 +477,9 @@ public class Minecraft implements Runnable {
         }
 
         new Thread(new Minecraft(), "Game Thread").start();
+    }
+
+    public void destroy() {
+        Display.destroy();
     }
 }
