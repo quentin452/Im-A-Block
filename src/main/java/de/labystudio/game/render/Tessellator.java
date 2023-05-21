@@ -2,14 +2,14 @@ package de.labystudio.game.render;
 
 import org.lwjgl.opengl.ARBVertexBufferObject;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GLContext;
+import org.lwjgl.opengl.GL15;
+import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 public class Tessellator {
-
     public static final Tessellator instance = new Tessellator(0x200000);
 
     private static final boolean convertQuadsToTriangles = true;
@@ -18,7 +18,9 @@ public class Tessellator {
     private final ByteBuffer byteBuffer;
     private final IntBuffer intBuffer;
     private final FloatBuffer floatBuffer;
+    private boolean isDrawing;
 
+    private int normal;
     private final int[] rawBuffer;
     private int vertexCount;
 
@@ -39,143 +41,132 @@ public class Tessellator {
     private double yOffset;
     private double zOffset;
 
-    private int normal;
-    private boolean isDrawing;
-    private final boolean useVBO = tryVBO && GLContext.getCapabilities().GL_ARB_vertex_buffer_object;
-    private IntBuffer vertexBuffers;
-    private int vboIndex;
+    private int vboId;
     private final int vboCount = 10;
     private final int bufferSize;
 
     private Tessellator(int i) {
         this.bufferSize = i;
-        this.byteBuffer = GLAllocation.createDirectByteBuffer(i * 4);
+        this.byteBuffer = MemoryUtil.memAlloc(i * 4);
         this.rawBuffer = new int[i];
 
         this.intBuffer = this.byteBuffer.asIntBuffer();
         this.floatBuffer = this.byteBuffer.asFloatBuffer();
 
-        if (this.useVBO) {
-            this.vertexBuffers = GLAllocation.createDirectIntBuffer(this.vboCount);
-            ARBVertexBufferObject.glGenBuffersARB(this.vertexBuffers);
+        if (tryVBO) {
+            this.vboId = GL15.glGenBuffers();
         }
     }
 
     public void draw() {
-        if (!this.isDrawing) {
-            throw new IllegalStateException("Not tesselating!");
+        if (!isDrawing) {
+            throw new IllegalStateException("Not tessellating!");
         }
-        this.isDrawing = false;
-        if (this.vertexCount > 0) {
-            this.intBuffer.clear();
+        isDrawing = false;
+        if (vertexCount > 0) {
+            int byteSize = rawBufferIndex * 4;
+            byteBuffer.flip();
 
-            this.intBuffer.put(this.rawBuffer, 0, this.rawBufferIndex);
-            this.byteBuffer.position(0);
-            this.byteBuffer.limit(this.rawBufferIndex * 4);
-
-            if (this.useVBO) {
-                this.vboIndex = (this.vboIndex + 1) % this.vboCount;
-                ARBVertexBufferObject.glBindBufferARB(ARBVertexBufferObject.GL_ARRAY_BUFFER_ARB, this.vertexBuffers.get(this.vboIndex));
-                ARBVertexBufferObject.glBufferDataARB(ARBVertexBufferObject.GL_ARRAY_BUFFER_ARB, this.byteBuffer, 35040);
-            }
-            if (this.hasTexture) {
-                if (this.useVBO) {
-                    GL11.glTexCoordPointer(2, GL11.GL_FLOAT, GL11.GL_PIXEL_MODE_BIT, 12L);
-                } else {
-                    this.floatBuffer.position(3);
-                    GL11.glTexCoordPointer(2, GL11.GL_PIXEL_MODE_BIT, this.floatBuffer);
+            if (tryVBO) {
+                GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
+                GL15.glBufferData(GL15.GL_ARRAY_BUFFER, byteBuffer, GL15.GL_DYNAMIC_DRAW);
+                GL11.glVertexPointer(3, GL11.GL_FLOAT, 32, 0);
+                if (hasTexture) {
+                    GL11.glTexCoordPointer(2, GL11.GL_FLOAT, 32, 12);
+                    GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
                 }
-                GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-            }
-            if (this.hasColor) {
-                if (this.useVBO) {
-                    GL11.glColorPointer(4, GL11.GL_UNSIGNED_BYTE, GL11.GL_PIXEL_MODE_BIT, 20L);
-                } else {
-                    this.byteBuffer.position(20);
-                    GL11.glColorPointer(4, true, GL11.GL_PIXEL_MODE_BIT, this.byteBuffer);
+                if (hasColor) {
+                    GL11.glColorPointer(4, GL11.GL_UNSIGNED_BYTE, 32, 20);
+                    GL11.glEnableClientState(GL11.GL_COLOR_ARRAY);
                 }
-                GL11.glEnableClientState(GL11.GL_COLOR_ARRAY);
-            }
-            if (this.hasNormals) {
-                if (this.useVBO) {
-                    GL11.glNormalPointer(GL11.GL_BYTE, GL11.GL_PIXEL_MODE_BIT, 24L);
-                } else {
-                    this.byteBuffer.position(24);
-                    GL11.glNormalPointer(GL11.GL_PIXEL_MODE_BIT, this.byteBuffer);
+                if (hasNormals) {
+                    GL11.glNormalPointer(GL11.GL_BYTE, 32, 24);
+                    GL11.glEnableClientState(GL11.GL_NORMAL_ARRAY);
                 }
-                GL11.glEnableClientState(GL11.GL_NORMAL_ARRAY);
-            }
-            if (this.useVBO) {
-                GL11.glVertexPointer(GL11.GL_LINE_STRIP, GL11.GL_FLOAT, GL11.GL_PIXEL_MODE_BIT, 0L);
+                GL11.glDrawArrays(drawMode, 0, vertexCount);
+                GL11.glDisableClientState(GL11.GL_VERTEX_ARRAY);
+                if (hasTexture) {
+                    GL11.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+                }
+                if (hasColor) {
+                    GL11.glDisableClientState(GL11.GL_COLOR_ARRAY);
+                }
+                if (hasNormals) {
+                    GL11.glDisableClientState(GL11.GL_NORMAL_ARRAY);
+                }
+                GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
             } else {
-                this.floatBuffer.position(0);
-                GL11.glVertexPointer(GL11.GL_LINE_STRIP, GL11.GL_PIXEL_MODE_BIT, this.floatBuffer);
-            }
-            GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-            if (this.drawMode == 7 && convertQuadsToTriangles) {
-                GL11.glDrawArrays(4, GL11.GL_POINTS, this.vertexCount);
-            } else {
-                GL11.glDrawArrays(this.drawMode, GL11.GL_POINTS, this.vertexCount);
-            }
-            GL11.glDisableClientState(GL11.GL_VERTEX_ARRAY);
-            if (this.hasTexture) {
-                GL11.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-            }
-            if (this.hasColor) {
-                GL11.glDisableClientState(GL11.GL_COLOR_ARRAY);
-            }
-            if (this.hasNormals) {
-                GL11.glDisableClientState(GL11.GL_NORMAL_ARRAY);
+                GL11.glVertexPointer(3, GL11.GL_FLOAT, 32, byteBuffer);
+                if (hasTexture) {
+                    GL11.glTexCoordPointer(2, GL11.GL_FLOAT, 32, byteBuffer.position(12));
+                    GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+                }
+                if (hasColor) {
+                    GL11.glColorPointer(4, GL11.GL_UNSIGNED_BYTE, 32, byteBuffer.position(20));
+                    GL11.glEnableClientState(GL11.GL_COLOR_ARRAY);
+                }
+                if (hasNormals) {
+                    GL11.glNormalPointer(GL11.GL_BYTE, 32, byteBuffer.position(24));
+                    GL11.glEnableClientState(GL11.GL_NORMAL_ARRAY);
+                }
+                GL11.glDrawArrays(drawMode, 0, vertexCount);
+                GL11.glDisableClientState(GL11.GL_VERTEX_ARRAY);
+                if (hasTexture) {
+                    GL11.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+                }
+                if (hasColor) {
+                    GL11.glDisableClientState(GL11.GL_COLOR_ARRAY);
+                }
+                if (hasNormals) {
+                    GL11.glDisableClientState(GL11.GL_NORMAL_ARRAY);
+                }
             }
         }
-
-        this.reset();
+        reset();
     }
 
     private void reset() {
-        this.vertexCount = 0;
-        this.byteBuffer.clear();
-        this.rawBufferIndex = 0;
-        this.addedVertices = 0;
+        vertexCount = 0;
+        byteBuffer.clear();
+        rawBufferIndex = 0;
+        addedVertices = 0;
     }
 
     public void startDrawingQuads() {
-        this.startDrawing(7);
+        startDrawing(7);
     }
 
     public void startDrawing(int i) {
-        if (this.isDrawing) {
+        if (isDrawing) {
             throw new IllegalStateException("Already tessellating!");
-        } else {
-            this.isDrawing = true;
-
-            this.reset();
-
-            this.drawMode = i;
-            this.hasNormals = false;
-            this.hasColor = false;
-            this.hasTexture = false;
-            this.isColorDisabled = false;
         }
+        isDrawing = true;
+        reset();
+        drawMode = i;
+        hasNormals = false;
+        hasColor = false;
+        hasTexture = false;
+        isColorDisabled = false;
     }
 
     public void setTextureUV(double u, double v) {
-        this.hasTexture = true;
-        this.textureU = u;
-        this.textureV = v;
+        hasTexture = true;
+        textureU = u;
+        textureV = v;
     }
 
     public void setColorOpaque_F(float r, float g, float b) {
-        this.setColorOpaque((int) (r * 255F), (int) (g * 255F), (int) (b * 255F));
+        setColorOpaque((int) (r * 255F), (int) (g * 255F), (int) (b * 255F));
     }
 
     public void setColorRGBA_F(float r, float g, float b, float a) {
-        this.setColorRGBA((int) (r * 255F), (int) (g * 255F), (int) (b * 255F), (int) (a * 255F));
+        setColorRGBA((int) (r * 255F), (int) (g * 255F), (int) (b * 255F), (int) (a * 255F));
     }
 
     public void setColorRGB_F(float r, float g, float b) {
-        this.setColorRGBA((int) (r * 255F), (int) (g * 255F), (int) (b * 255F), 255);
+        setColorRGBA((int) (r * 255F), (int) (g * 255F), (int) (b * 255F), 255);
     }
+
 
     public void setColorOpaque(int r, int g, int b) {
         this.setColorRGBA(r, g, b, 255);

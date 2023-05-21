@@ -12,19 +12,20 @@ import de.labystudio.game.world.World;
 import de.labystudio.game.world.WorldRenderer;
 import de.labystudio.game.world.block.Block;
 import de.labystudio.game.world.chunk.ChunkSection;
-import org.lwjgl.LWJGLException;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.Display;
+import org.joml.Math;
+import org.joml.Matrix4f;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.glu.GLU;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.FloatBuffer;
 
 public class Minecraft implements Runnable {
 
-    private final MinecraftWindow gameWindow = new MinecraftWindow(this);
+    private final MinecraftWindow gameWindow = new MinecraftWindow(this, new Canvas(), new Frame());
     protected final GuiRenderer gui = new GuiRenderer();
 
     // Game
@@ -42,7 +43,7 @@ public class Minecraft implements Runnable {
     private boolean running = true;
     private int fps;
 
-    public void init() throws LWJGLException, IOException {
+    public void init() throws IOException {
         // Setup display
         this.gameWindow.init();
         this.gui.init(this.gameWindow);
@@ -55,10 +56,20 @@ public class Minecraft implements Runnable {
         this.fontRenderer = new FontRenderer(this.gui, "/font.png");
 
         // Setup controls
-        Keyboard.create();
-        Mouse.create();
-        Mouse.setGrabbed(true);
+        GLFW.glfwSetKeyCallback(this.gameWindow.getWindow(), (window, key, scancode, action, mods) -> {
+            if (key == GLFW.GLFW_KEY_ESCAPE && action == GLFW.GLFW_PRESS) {
+                this.paused = true;
+                GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
+            }
+            if (key == GLFW.GLFW_KEY_W && action == GLFW.GLFW_PRESS) {
+                this.gameWindow.toggleFullscreen();
+                GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
+            }
+        });
+
+        GLFW.glfwSetInputMode(this.gameWindow.getWindow(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
     }
+
 
     public void run() {
         try {
@@ -93,18 +104,7 @@ public class Minecraft implements Runnable {
                     frames = 0;
                 }
 
-                // Escape
-                if (Keyboard.isKeyDown(1) || !Display.isActive()) {
-                    this.paused = true;
-                    Mouse.setGrabbed(false);
-                }
-
-                // Toggle fullscreen
-                if (Keyboard.isKeyDown(87)) {
-                    this.gameWindow.toggleFullscreen();
-                }
-
-            } while (!Display.isCloseRequested() && this.running);
+            } while (GLFW.glfwWindowShouldClose(gameWindow.getWindow()) && this.running);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -112,8 +112,8 @@ public class Minecraft implements Runnable {
             this.world.save();
             this.gameWindow.destroy();
 
-            Mouse.destroy();
-            Keyboard.destroy();
+            GLFW.glfwDestroyWindow(gameWindow.getWindow());
+            GLFW.glfwDestroyCursor(gameWindow.getWindow());
 
             System.exit(0);
         }
@@ -147,36 +147,43 @@ public class Minecraft implements Runnable {
     }
 
     private void setupCamera(float partialTicks) {
-        double zFar = Math.pow(WorldRenderer.RENDER_DISTANCE * ChunkSection.SIZE, 2);
+        double zFar = (WorldRenderer.RENDER_DISTANCE * ChunkSection.SIZE) * (WorldRenderer.RENDER_DISTANCE * ChunkSection.SIZE);
 
         GL11.glMatrixMode(GL11.GL_PROJECTION);
         GL11.glLoadIdentity();
-        GLU.gluPerspective(85.0F + this.player.getFOVModifier(),
+
+        Matrix4f projMatrix = new Matrix4f();
+        projMatrix.perspective((float) Math.toRadians(85.0F + this.player.getFOVModifier()),
                 (float) this.gameWindow.displayWidth / (float) this.gameWindow.displayHeight, 0.05F, (float) zFar);
+
+        FloatBuffer projMatrixBuffer = BufferUtils.createFloatBuffer(16);
+        projMatrix.get(projMatrixBuffer);
+
+        GL11.glLoadMatrixf(projMatrixBuffer);
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glLoadIdentity();
+
         this.moveCameraToPlayer(partialTicks);
     }
 
-
     public void render(float partialTicks) {
-        float mouseMoveX = Mouse.getDX();
-        float mouseMoveY = Mouse.getDY();
+        GLFW.glfwSetCursorPosCallback(this.gameWindow.getWindow(), (window, xpos, ypos) -> {
+            float mouseMoveX = (float) xpos;
+            float mouseMoveY = (float) ypos;
 
-        if (!this.paused) {
-            this.player.turn(mouseMoveX, mouseMoveY);
-        }
+            if (!this.paused) {
+                this.player.turn(mouseMoveX, mouseMoveY);
+            }
+        });
 
         // Calculate the target block of the player
         HitResult hitResult = this.getTargetBlock();
 
-        while (Mouse.next()) {
-            if ((Mouse.getEventButton() == 0) && (Mouse.getEventButtonState())) {
+        GLFW.glfwSetMouseButtonCallback(this.gameWindow.getWindow(), (window, button, action, mods) -> {
+            if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT && action == GLFW.GLFW_PRESS) {
                 // Resume game if paused
                 if (this.paused) {
                     this.paused = false;
-
-                    Mouse.setGrabbed(true);
                 } else {
                     // Destroy block
                     if (hitResult != null) {
@@ -186,7 +193,7 @@ public class Minecraft implements Runnable {
             }
 
             // Place block
-            if ((Mouse.getEventButton() == 1) && (Mouse.getEventButtonState())) {
+            if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && action == GLFW.GLFW_PRESS) {
                 if (hitResult != null) {
                     int x = hitResult.x + hitResult.face.x;
                     int y = hitResult.y + hitResult.face.y;
@@ -203,7 +210,7 @@ public class Minecraft implements Runnable {
             }
 
             // Pick block
-            if ((Mouse.getEventButton() == 2) && (Mouse.getEventButtonState())) {
+            if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW.GLFW_PRESS) {
                 if (hitResult != null) {
                     short typeId = this.world.getBlockAt(hitResult.x, hitResult.y, hitResult.z);
                     if (typeId != 0) {
@@ -211,9 +218,10 @@ public class Minecraft implements Runnable {
                     }
                 }
             }
-        }
-        while (Keyboard.next()) {
-            if ((Keyboard.getEventKey() == 28) && (Keyboard.getEventKeyState())) {
+        });
+
+        while (GLFW.glfwGetKey(gameWindow.getWindow(), GLFW.GLFW_KEY_S) == GLFW.GLFW_PRESS) {
+            if (GLFW.glfwGetKey(gameWindow.getWindow(), GLFW.GLFW_KEY_ENTER) == GLFW.GLFW_PRESS) {
                 this.world.save();
             }
         }
@@ -329,11 +337,11 @@ public class Minecraft implements Runnable {
     public static void checkError() {
         int error = GL11.glGetError();
         if (error != 0) {
-            throw new IllegalStateException(GLU.gluErrorString(error));
+            throw new IllegalStateException("OpenGL error " + error);
         }
     }
 
-    public static void main(String[] args) throws LWJGLException {
+    public static void main(String[] args) throws IOException {
         // Set library path if not available
         if (System.getProperty("org.lwjgl.librarypath") == null) {
             System.setProperty("org.lwjgl.librarypath", new File("run/natives").getAbsolutePath());

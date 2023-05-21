@@ -3,8 +3,7 @@ package de.labystudio.game.player;
 import de.labystudio.game.util.BoundingBox;
 import de.labystudio.game.world.World;
 import de.labystudio.game.world.block.Block;
-import org.lwjgl.input.Keyboard;
-
+import org.lwjgl.glfw.GLFW;
 import java.util.List;
 
 public class Player {
@@ -305,33 +304,34 @@ public class Player {
         boolean jumping = false;
         boolean sneaking = false;
 
-        // controls #todo important
-        if (Keyboard.isKeyDown(19)) { // R
+        long window = GLFW.glfwGetCurrentContext();
+
+        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_R) == GLFW.GLFW_PRESS) {
             this.resetPos();
         }
-        if ((Keyboard.isKeyDown(200)) || (Keyboard.isKeyDown(17))) { // W
+        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_W) == GLFW.GLFW_PRESS) {
             moveForward++;
         }
-        if ((Keyboard.isKeyDown(208)) || (Keyboard.isKeyDown(31))) { // S
+        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_S) == GLFW.GLFW_PRESS) {
             moveForward--;
         }
-        if ((Keyboard.isKeyDown(203)) || (Keyboard.isKeyDown(30))) { // A
+        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_A) == GLFW.GLFW_PRESS) {
             moveStrafe++;
         }
-        if ((Keyboard.isKeyDown(205)) || (Keyboard.isKeyDown(32))) { // D
+        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_D) == GLFW.GLFW_PRESS) {
             moveStrafe--;
         }
-        if ((Keyboard.isKeyDown(57)) || (Keyboard.isKeyDown(219))) { // Space
+        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_SPACE) == GLFW.GLFW_PRESS) {
             jumping = true;
         }
-        if (Keyboard.isKeyDown(42)) { // Shift
+        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS) {
             if (this.moveForward > 0 && !this.sneaking && !this.sprinting && this.motionX != 0 && this.motionZ != 0) {
                 this.sprinting = true;
 
                 this.updateFOVModifier();
             }
         }
-        if (Keyboard.isKeyDown(16)) { // Q
+        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_Q) == GLFW.GLFW_PRESS) {
             sneaking = true;
         }
 

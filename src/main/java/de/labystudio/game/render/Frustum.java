@@ -5,6 +5,7 @@ import de.labystudio.game.world.World;
 import de.labystudio.game.world.chunk.Chunk;
 import de.labystudio.game.world.chunk.ChunkSection;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
 
 import java.nio.FloatBuffer;
 
@@ -90,14 +91,14 @@ public class Frustum {
         // Below, we pass in GL_PROJECTION_MATRIX to abstract our projection matrix.
         // It then stores the matrix into an array of [16].
         this.proj_b.rewind();
-        glGetFloat(GL_PROJECTION_MATRIX, this.proj_b);
+        GL11.glGetFloatv(GL11.GL_PROJECTION_MATRIX, this.proj_b);
         this.proj_b.rewind();
         this.proj_b.get(proj);
 
         // By passing in GL_MODELVIEW_MATRIX, we can abstract our model view matrix.
         // This also stores it in an array of [16].
         this.modl_b.rewind();
-        glGetFloat(GL_MODELVIEW_MATRIX, this.modl_b);
+        GL11.glGetFloatv(GL11.GL_MODELVIEW_MATRIX, this.modl_b);
         this.modl_b.rewind();
         this.modl_b.get(modl);
 

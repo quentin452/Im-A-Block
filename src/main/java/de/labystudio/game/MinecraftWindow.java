@@ -1,14 +1,19 @@
 package de.labystudio.game;
 
-import org.lwjgl.LWJGLException;
-import org.lwjgl.opengl.Display;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.opengl.GL;
 
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.io.IOException;
 
 public class MinecraftWindow {
+    private long window;
 
+    public long getWindow() {
+        return window;
+    }
     public static final int DEFAULT_WIDTH = 854;
     public static final int DEFAULT_HEIGHT = 480;
 
@@ -23,103 +28,77 @@ public class MinecraftWindow {
     public int displayWidth = DEFAULT_WIDTH;
     public int displayHeight = DEFAULT_HEIGHT;
 
-    public MinecraftWindow(Minecraft game) {
+    public MinecraftWindow(Minecraft game, Canvas canvas, Frame frame) {
         this.game = game;
+        this.canvas = canvas;
+        this.frame = frame;
 
-        // Create canvas
-        this.canvas = new Canvas();
-        this.canvas.setPreferredSize(new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
+        GLFWErrorCallback.createPrint(System.err).set();
 
-        // Create frame
-        this.frame = new Frame("3DGame");
-        this.frame.setLayout(new BorderLayout());
-        this.frame.add(this.canvas, "Center");
-        this.frame.pack();
-        this.frame.setLocationRelativeTo(null);
-        this.frame.setVisible(true);
+        if (!GLFW.glfwInit()) {
+            throw new IllegalStateException("Unable to initialize GLFW");
+        }
 
-        // Close listener
-        this.frame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                game.shutdown();
-            }
-        });
+        // Configure GLFW
+        GLFW.glfwDefaultWindowHints();
+        GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
+        GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE);
+
+        // Create the window
+        window = GLFW.glfwCreateWindow(DEFAULT_WIDTH, DEFAULT_HEIGHT, "3DGame", 0, 0);
+        if (window == 0) {
+            throw new RuntimeException("Failed to create the GLFW window");
+        }
+
+        // Center the window
+        GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+        GLFW.glfwSetWindowPos(window, (vidmode.width() - DEFAULT_WIDTH) / 2, (vidmode.height() - DEFAULT_HEIGHT) / 2);
+
+        // Make the OpenGL context current
+        GLFW.glfwMakeContextCurrent(window);
+        GL.createCapabilities();
+
+        // Enable v-sync
+        GLFW.glfwSwapInterval(1);
+
+        // Show the window
+        GLFW.glfwShowWindow(window);
     }
 
-    public void init() throws LWJGLException {
+
+    public void init() throws IOException {
         Graphics g = this.canvas.getGraphics();
         if (g != null) {
             g.setColor(Color.BLACK);
             g.fillRect(0, 0, this.displayWidth, this.displayHeight);
             g.dispose();
         }
-        Display.setParent(this.canvas);
 
-        // Init
-        Display.setTitle(this.frame.getTitle());
-
-        try {
-            Display.create();
-        } catch (LWJGLException lwjglexception) {
-            lwjglexception.printStackTrace();
-
-            // Try again in one second
-            try {
-                Thread.sleep(1000L);
-            } catch (InterruptedException ignored) {
-            }
-
-            Display.create();
-        }
-
-        Display.swapBuffers();
+        // Init game
     }
 
     public void toggleFullscreen() {
-        try {
-            this.fullscreen = !this.fullscreen;
+        this.fullscreen = !this.fullscreen;
 
-            System.out.println("Toggle fullscreen!");
+        System.out.println("Toggle fullscreen!");
 
-            if (this.fullscreen) {
-                Display.setDisplayMode(Display.getDesktopDisplayMode());
+        GLFW.glfwSetWindowMonitor(window, this.fullscreen ? GLFW.glfwGetPrimaryMonitor() : 0, 0, 0, this.displayWidth, this.displayHeight, GLFW.GLFW_DONT_CARE);
 
-                this.displayWidth = Display.getDisplayMode().getWidth();
-                this.displayHeight = Display.getDisplayMode().getHeight();
-
-                if (this.displayWidth <= 0) {
-                    this.displayWidth = 1;
-                }
-                if (this.displayHeight <= 0) {
-                    this.displayHeight = 1;
-                }
-            } else {
-                this.displayWidth = this.canvas.getWidth();
-                this.displayHeight = this.canvas.getHeight();
-
-                if (this.displayWidth <= 0) {
-                    this.displayWidth = 1;
-                }
-                if (this.displayHeight <= 0) {
-                    this.displayHeight = 1;
-                }
-
-                Display.setDisplayMode(new org.lwjgl.opengl.DisplayMode(DEFAULT_WIDTH, DEFAULT_HEIGHT));
-            }
-
-            Display.setFullscreen(this.fullscreen);
-            Display.update();
-
-            Thread.sleep(1000L);
-            System.out.println("Size: " + this.displayWidth + ", " + this.displayHeight);
-        } catch (Exception exception) {
-            exception.printStackTrace();
+        if (this.fullscreen) {
+            GLFWVidMode vidmode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+            this.displayWidth = vidmode.width();
+            this.displayHeight = vidmode.height();
+        } else {
+            this.displayWidth = DEFAULT_WIDTH;
+            this.displayHeight = DEFAULT_HEIGHT;
         }
+
+        System.out.println("Size: " + this.displayWidth + ", " + this.displayHeight);
     }
 
     public void update() {
-        Display.update();
+        GLFW.glfwSwapBuffers(window);
+        GLFW.glfwPollEvents();
 
         if (!this.fullscreen && (this.canvas.getWidth() != this.displayWidth || this.canvas.getHeight() != this.displayHeight)) {
             this.displayWidth = this.canvas.getWidth();
@@ -152,6 +131,6 @@ public class MinecraftWindow {
     }
 
     public void destroy() {
-        Display.destroy();
+        GLFW.glfwTerminate();
     }
 }
