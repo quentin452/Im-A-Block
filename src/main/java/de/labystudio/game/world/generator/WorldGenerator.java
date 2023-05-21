@@ -6,14 +6,13 @@ import de.labystudio.game.world.chunk.ChunkSection;
 import de.labystudio.game.world.generator.noise.NoiseGeneratorCombined;
 import de.labystudio.game.world.generator.noise.NoiseGeneratorOctaves;
 
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class WorldGenerator {
 
     private final World world;
-    private final Random random;
 
     private final NoiseGenerator groundHeightNoise;
     private final NoiseGenerator hillNoise;
@@ -27,26 +26,24 @@ public final class WorldGenerator {
 
     public WorldGenerator(World world, int seed) {
         this.world = world;
-        this.random = new Random(seed);
 
         // Create noise for the ground height
-        this.groundHeightNoise = new NoiseGeneratorOctaves(this.random, 8);
-        this.hillNoise = new NoiseGeneratorCombined(new NoiseGeneratorOctaves(this.random, 4),
-                new NoiseGeneratorCombined(new NoiseGeneratorOctaves(this.random, 4),
-                        new NoiseGeneratorOctaves(this.random, 4)));
+        this.groundHeightNoise = new NoiseGeneratorOctaves(ThreadLocalRandom.current(), 8);
+        this.hillNoise = new NoiseGeneratorCombined(new NoiseGeneratorOctaves(ThreadLocalRandom.current(), 4),
+                new NoiseGeneratorCombined(new NoiseGeneratorOctaves(ThreadLocalRandom.current(), 4),
+                        new NoiseGeneratorOctaves(ThreadLocalRandom.current(), 4)));
 
-        // Water noise
-        this.sandInWaterNoise = new NoiseGeneratorOctaves(this.random, 8);
+        this.sandInWaterNoise = new NoiseGeneratorOctaves(ThreadLocalRandom.current(), 8);
 
         // Hole in hills and islands
-        this.holeNoise = new NoiseGeneratorOctaves(this.random, 3);
-        this.islandNoise = new NoiseGeneratorOctaves(this.random, 3);
+        this.holeNoise = new NoiseGeneratorOctaves(ThreadLocalRandom.current(), 3);
+        this.islandNoise = new NoiseGeneratorOctaves(ThreadLocalRandom.current(), 3);
 
         // Caves
-        this.caveNoise = new NoiseGeneratorOctaves(this.random, 8);
+        this.caveNoise = new NoiseGeneratorOctaves(ThreadLocalRandom.current(), 8);
 
         // Population
-        this.forestNoise = new NoiseGeneratorOctaves(this.random, 8);
+        this.forestNoise = new NoiseGeneratorOctaves(ThreadLocalRandom.current(), 8);
     }
 
     public void generateChunk(int chunkX, int chunkZ) {
@@ -56,6 +53,7 @@ public final class WorldGenerator {
             final int x = chunkX * ChunkSection.SIZE + relX;
 
             executor.execute(() -> {
+                ThreadLocalRandom random = ThreadLocalRandom.current();
                 for (int relZ = 0; relZ < ChunkSection.SIZE; relZ++) {
                     int z = chunkZ * ChunkSection.SIZE + relZ;
 
@@ -87,7 +85,6 @@ public final class WorldGenerator {
                             world.setBlockAt(x, y, z, block.getId());
                         }
                     }
-
                 /*
                 int holeY = (int) (this.holeNouse.perlin(-x / 20F, -z / 20F) * 3F + this.waterLevel + 10);
                 int holeHeight = (int) this.holeNouse.perlin(x / 4F, -z / 4F);
@@ -98,33 +95,31 @@ public final class WorldGenerator {
                     }
                 }
                 */
+                    // Random holes in hills
+                    int holePositionY = (int) (this.holeNoise.perlin(-x / 20F, -z / 20F) * 3F + this.waterLevel + 10);
+                    int holeHeight = (int) this.holeNoise.perlin(x / 4F, -z / 4F);
 
-                // Random holes in hills
-                int holePositionY = (int) (this.holeNoise.perlin(-x / 20F, -z / 20F) * 3F + this.waterLevel + 10);
-                int holeHeight = (int) this.holeNoise.perlin(x / 4F, -z / 4F);
-
-                if (holeHeight > 0) {
-                    for (int y = holePositionY - holeHeight; y <= holePositionY + holeHeight; y++) {
-                        if (y > this.waterLevel) {
-                            this.world.setBlockAt(x, y, z, 0);
+                    if (holeHeight > 0) {
+                        for (int y = holePositionY - holeHeight; y <= holePositionY + holeHeight; y++) {
+                            if (y > this.waterLevel) {
+                                this.world.setBlockAt(x, y, z, 0);
+                            }
                         }
                     }
-                }
 
-                // Floating islands
-                int islandPositionY = (int) (this.islandNoise.perlin(-x / 10F, -z / 10F) * 3F + this.waterLevel + 10);
-                int islandHeight = (int) (this.islandNoise.perlin(x / 4F, -z / 4F) * 4F);
-                int islandRarity = (int) (this.islandNoise.perlin(x / 40F, z / 40F) * 4F) - 10;
+                    // Floating islands
+                    int islandPositionY = (int) (this.islandNoise.perlin(-x / 10F, -z / 10F) * 3F + this.waterLevel + 10);
+                    int islandHeight = (int) (this.islandNoise.perlin(x / 4F, -z / 4F) * 4F);
+                    int islandRarity = (int) (this.islandNoise.perlin(x / 40F, z / 40F) * 4F) - 10;
 
-                if (islandHeight > 0 && islandRarity > 0) {
-                    for (int y = islandPositionY - islandHeight; y <= islandPositionY + islandHeight; y++) {
-                        Block block = y == islandPositionY + islandHeight ? Block.GRASS : (islandPositionY + islandHeight) - y < 2 ? Block.DIRT : Block.STONE;
-                        this.world.setBlockAt(x, y, z, block.getId());
+                    if (islandHeight > 0 && islandRarity > 0) {
+                        for (int y = islandPositionY - islandHeight; y <= islandPositionY + islandHeight; y++) {
+                            Block block = y == islandPositionY + islandHeight ? Block.GRASS : (islandPositionY + islandHeight) - y < 2 ? Block.DIRT : Block.STONE;
+                            this.world.setBlockAt(x, y, z, block.getId());
+                        }
                     }
-                }
 
-
-                // Caves
+                    // Caves
                 }
             });
         }
@@ -136,10 +131,10 @@ public final class WorldGenerator {
     }
 
     public void populateChunk(int chunkX, int chunkZ) {
-        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
         for (int index = 0; index < 10; index++) {
+            ExecutorService executor = Executors.newSingleThreadExecutor();
             executor.execute(() -> {
+                ThreadLocalRandom random = ThreadLocalRandom.current();
                 int x = random.nextInt(ChunkSection.SIZE);
                 int z = random.nextInt(ChunkSection.SIZE);
 
@@ -150,7 +145,6 @@ public final class WorldGenerator {
                 // Use noise for a forest pattern
                 double perlin = forestNoise.perlin(absoluteX * 10, absoluteZ * 10);
                 if (perlin > 0 && random.nextInt(2) == 0) {
-
                     // Get highest block at this position
                     int highestY = world.getHighestBlockYAt(absoluteX, absoluteZ);
 
@@ -200,11 +194,8 @@ public final class WorldGenerator {
                     }
                 }
             });
-        }
-
-        executor.shutdown();
-        while (!executor.isTerminated()) {
-            // Wait for all tasks to complete
+            executor.shutdown();
         }
     }
+
 }
