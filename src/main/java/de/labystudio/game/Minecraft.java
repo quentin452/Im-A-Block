@@ -293,6 +293,9 @@ public class Minecraft extends Game {
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
         this.fontRenderer.drawString("FPS: " + this.fps, 2, 2);
+        this.fontRenderer.drawString("X: " + String.format("%.2f", this.player.x), 2, 16);
+        this.fontRenderer.drawString("Y: " + String.format("%.2f", this.player.y), 2, 30);
+        this.fontRenderer.drawString("Z: " + String.format("%.2f", this.player.z), 2, 44);
     }
 
     public void renderSelection(HitResult hitResult) {
