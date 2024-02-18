@@ -5,7 +5,6 @@ import de.labystudio.game.world.World;
 import de.labystudio.game.world.block.Block;
 import org.lwjgl.input.Keyboard;
 
-import java.util.List;
 import java.util.Set;
 
 public class Player {

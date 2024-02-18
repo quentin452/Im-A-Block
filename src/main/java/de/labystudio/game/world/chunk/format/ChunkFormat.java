@@ -5,8 +5,8 @@ import com.github.steveice10.opennbt.NBTIO;
 import com.github.steveice10.opennbt.tag.builtin.*;
 import de.labystudio.game.world.World;
 import de.labystudio.game.world.block.Block;
-import de.labystudio.game.world.chunk.ChunkSection;
 import de.labystudio.game.world.chunk.Chunk;
+import de.labystudio.game.world.chunk.ChunkSection;
 
 import java.io.*;
 import java.util.ArrayList;
