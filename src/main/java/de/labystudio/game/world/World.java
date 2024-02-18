@@ -24,7 +24,7 @@ public class World implements IWorldAccess {
     public static final int TOTAL_HEIGHT = ChunkSection.SIZE * 16 - 1;
     public Map<Long, Chunk> chunks = new HashMap<>();
 
-    public boolean updateLightning = false;
+    public boolean updateLightning = true;
     private final Queue<Long> lightUpdateQueue = new LinkedList<>();
 
     private final WorldGenerator generator = new WorldGenerator(this, (int) (System.currentTimeMillis() % 100000));
