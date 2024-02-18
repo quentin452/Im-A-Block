@@ -7,7 +7,7 @@ public class MathHelper {
      */
     public static int floor_double(double value) {
         int i = (int) value;
-        return value < (double) i ? i - 1 : i;
+        return value < i ? i - 1 : i;
     }
 
 }

@@ -13,7 +13,7 @@ public final class NoiseGeneratorCombined extends NoiseGenerator {
     }
 
     @Override
-    public final double perlin(double x,  double z) {
+    public double perlin(double x, double z) {
         return this.firstGenerator.perlin(x + this.secondGenerator.perlin(x, z), z);
     }
 }

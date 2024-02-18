@@ -12,13 +12,24 @@ public abstract class Block {
 
     private static final Map<Short, Block> blocks = new HashMap<>();
 
-    public static BlockStone STONE = new BlockStone(1, 0);
-    public static BlockGrass GRASS = new BlockGrass(2, 1);
-    public static BlockDirt DIRT = new BlockDirt(3, 2);
-    public static BlockLog LOG = new BlockLog(17, 4);
-    public static BlockLeave LEAVE = new BlockLeave(18, 6);
-    public static BlockWater WATER = new BlockWater(9, 7);
-    public static BlockSand SAND = new BlockSand(12, 8);
+
+    public static BlockStone STONE;
+    public static BlockGrass GRASS;
+    public static BlockDirt DIRT;
+    public static BlockLog LOG;
+    public static BlockLeave LEAVE;
+    public static BlockWater WATER;
+    public static BlockSand SAND;
+
+    static {
+        STONE = new BlockStone(1, 0);
+        GRASS = new BlockGrass(2, 1);
+        DIRT = new BlockDirt(3, 2);
+        LOG = new BlockLog(17, 4);
+        LEAVE = new BlockLeave(18, 6);
+        WATER = new BlockWater(9, 7);
+        SAND = new BlockSand(12, 8);
+    }
 
     protected final int id;
     protected final int textureSlotId;

@@ -37,6 +37,7 @@ public class TextureManager {
 
         try {
             // Read to buffered image
+            assert inputStream != null;
             BufferedImage bufferedImage = ImageIO.read(inputStream);
 
             // Get image size

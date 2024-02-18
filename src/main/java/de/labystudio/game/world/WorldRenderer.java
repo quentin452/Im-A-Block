@@ -11,7 +11,6 @@ import org.lwjgl.opengl.GL11;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class WorldRenderer {
@@ -89,9 +88,9 @@ public class WorldRenderer {
         }
 
         // Sort update queue, chunk sections that are closer to the camera get a higher priority
-        Collections.sort(this.chunkSectionUpdateQueue, (section1, section2) -> {
-            int distance1 = (int) (Math.pow(section1.x - cameraChunkX, 2) + Math.pow(section1.z - cameraChunkZ, 2));
-            int distance2 = (int) (Math.pow(section2.x - cameraChunkX, 2) + Math.pow(section2.z - cameraChunkZ, 2));
+        this.chunkSectionUpdateQueue.sort((section1, section2) -> {
+            int distance1 = (int) (Math.pow((double)section1.x - cameraChunkX, 2) + Math.pow((double)section1.z - cameraChunkZ, 2));
+            int distance2 = (int) (Math.pow((double)section2.x - cameraChunkX, 2) + Math.pow((double)section2.z - cameraChunkZ, 2));
             return Integer.compare(distance1, distance2);
         });
 

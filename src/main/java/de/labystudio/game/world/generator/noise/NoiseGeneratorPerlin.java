@@ -53,7 +53,7 @@ public final class NoiseGeneratorPerlin extends NoiseGenerator {
     }
 
     @Override
-    public final double perlin(double x, double z) {
+    public double perlin(double x, double z) {
         double y;
 
         int xi = (int) Math.floor(x) & 0xFF;

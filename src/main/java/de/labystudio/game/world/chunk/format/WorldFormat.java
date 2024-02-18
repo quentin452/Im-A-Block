@@ -14,15 +14,13 @@ import java.util.List;
 public class WorldFormat {
 
     private final World world;
-    private final File worldDirectory;
     private final File regionDirectory;
     private final String name;
 
     public WorldFormat(World world, File worldDirectory) {
         this.world = world;
-        this.worldDirectory = worldDirectory;
         this.name = worldDirectory.getName();
-        this.regionDirectory = new File(this.worldDirectory, "region");
+        this.regionDirectory = new File(worldDirectory, "region");
     }
 
     public RegionFormat getRegion(int x, int z) {
@@ -49,9 +47,7 @@ public class WorldFormat {
                 if (regionFile.getName().endsWith("~"))
                     continue;
 
-                RegionFormat region = new RegionFormat(regionFile);
-
-                try {
+                try (RegionFormat region = new RegionFormat(regionFile)) {
                     for (int x = 0; x < 32; x++) {
                         for (int z = 0; z < 32; z++) {
                             try (DataInputStream inputStream = region.getChunkDataInputStream(x, z)) {
@@ -84,25 +80,7 @@ public class WorldFormat {
     }
 
     public void saveChunks() throws IOException {
-        List<Long> regionsToSave = new ArrayList<>();
-
-        // Get all regions to save
-        for (Chunk chunk : this.world.chunks.values()) {
-            if (chunk.isEmpty())
-                continue;
-
-            // Get region coordinates of this chunk
-            int regionX = chunk.getX() >> 5;
-            int regionZ = chunk.getZ() >> 5;
-
-            // Create an id of this region coordinate
-            long regionId = ((long) regionX) << 32L | regionZ & 0xFFFFFFFFL;
-
-            // Add to queue
-            if (!regionsToSave.contains(regionId)) {
-                regionsToSave.add(regionId);
-            }
-        }
+        List<Long> regionsToSave = getLongs();
 
         System.out.println("Start saving world in " + regionsToSave.size() + " region files.");
 
@@ -136,6 +114,29 @@ public class WorldFormat {
                 }
             }
         }
+    }
+
+    private List<Long> getLongs() {
+        List<Long> regionsToSave = new ArrayList<>();
+
+        // Get all regions to save
+        for (Chunk chunk : this.world.chunks.values()) {
+            if (chunk.isEmpty())
+                continue;
+
+            // Get region coordinates of this chunk
+            int regionX = chunk.getX() >> 5;
+            int regionZ = chunk.getZ() >> 5;
+
+            // Create an id of this region coordinate
+            long regionId = ((long) regionX) << 32L | regionZ & 0xFFFFFFFFL;
+
+            // Add to queue
+            if (!regionsToSave.contains(regionId)) {
+                regionsToSave.add(regionId);
+            }
+        }
+        return regionsToSave;
     }
 
     public boolean exists() {

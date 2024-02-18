@@ -5,14 +5,12 @@ import de.labystudio.game.world.WorldRenderer;
 
 public class Chunk {
 
-    private World world;
     private ChunkSection[] sections;
 
     private final int x;
     private final int z;
 
     public Chunk(World world, int x, int z) {
-        this.world = world;
         this.x = x;
         this.z = z;
 
@@ -64,6 +62,6 @@ public class Chunk {
     }
 
     public static long getIndex(int x, int z) {
-        return (long) x & 4294967295L | ((long) z & 4294967295L) << 32;
+        return x & 4294967295L | (z & 4294967295L) << 32;
     }
 }

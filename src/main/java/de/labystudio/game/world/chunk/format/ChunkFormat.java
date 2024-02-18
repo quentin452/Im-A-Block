@@ -14,11 +14,11 @@ import java.util.List;
 
 public class ChunkFormat {
 
-    private ChunkSection[] chunkSections = new ChunkSection[16];
+    private final ChunkSection[] chunkSections = new ChunkSection[16];
 
-    private World world;
-    private int x;
-    private int z;
+    private final World world;
+    private final int x;
+    private final int z;
 
     private boolean empty = true;
 
@@ -93,11 +93,15 @@ public class ChunkFormat {
     }
 
     private static void setHalfByte(int index, byte value, byte[] bytes) {
-        bytes[index / 2] = (byte) ((bytes[index / 2] &= 0xF << (index % 2 == 0 ? 4 : 0)) | (value & 0xF) << (index % 2 == 0 ? 0 : 4));
+        int shift = (index % 2 == 0) ? 4 : 0;
+
+        // Clear the target half-byte
+        bytes[index / 2] = (byte) ((bytes[index / 2] & ~(0xF << shift)) |
+                ((value & 0xF) << shift) & 0xFF);
     }
 
     public static void write(Chunk chunk, DataOutputStream dataOutputStream) throws IOException {
-        List<Tag> sectionList = new ArrayList<Tag>();
+        List<Tag> sectionList = new ArrayList<>();
         for (byte y = 0; y < 16; y++) {
             ChunkSection chunkSection = chunk.getSection(y);
 

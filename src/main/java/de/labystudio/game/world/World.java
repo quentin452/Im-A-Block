@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
@@ -42,7 +43,6 @@ public class World implements IWorldAccess {
                 chunk.queueForRebuild();
             });
 
-            this.updateLightning = true;
         } else {
             int radius = 20;
 
@@ -60,8 +60,8 @@ public class World implements IWorldAccess {
                 }
             }
 
-            this.updateLightning = true;
         }
+        this.updateLightning = true;
     }
 
     public void save() {
@@ -90,7 +90,7 @@ public class World implements IWorldAccess {
         }
     }
 
-    public ArrayList<BoundingBox> getCollisionBoxes(BoundingBox aabb) {
+    public List<BoundingBox> getCollisionBoxes(BoundingBox aabb) {
         ArrayList<BoundingBox> boundingBoxList = new ArrayList<>();
 
         int minX = MathHelper.floor_double(aabb.minX);
@@ -104,7 +104,7 @@ public class World implements IWorldAccess {
             for (int y = minY; y < maxY; y++) {
                 for (int z = minZ; z < maxZ; z++) {
                     if (this.isSolidBlockAt(x, y, z)) {
-                        boundingBoxList.add(new BoundingBox(x, y, z, x + 1, y + 1, z + 1));
+                        boundingBoxList.add(new BoundingBox(x, y, z, (double)x + 1, (double)y + 1, (double)z + 1));
                     }
                 }
             }
@@ -146,8 +146,7 @@ public class World implements IWorldAccess {
 
     public void setBlockAt(int x, int y, int z, int type) {
         ChunkSection chunkSection = this.getChunkAtBlock(x, y, z);
-        if (chunkSection != null) {
-            if (chunkSection.getBlockAt(x & 15, y & 15, z & 15) != type) {
+        if (chunkSection != null && (chunkSection.getBlockAt(x & 15, y & 15, z & 15) != type)) {
                 chunkSection.setBlockAt(x & 15, y & 15, z & 15, type);
 
                 if (this.updateLightning) {
@@ -155,7 +154,6 @@ public class World implements IWorldAccess {
                 }
 
                 this.blockChanged(x, y, z);
-            }
         }
     }
 
@@ -189,7 +187,7 @@ public class World implements IWorldAccess {
                 float translucence = typeId == 0 ? 1.0F : 1.0F - Block.getById(typeId).getOpacity();
 
                 // Decrease strength of the skylight by the opacity of the block
-                skyLevel *= translucence;
+                skyLevel *= (int) translucence;
 
                 // Get previous block light
                 float prevBlockLight = this.getLightAt(x, y, z);
@@ -305,11 +303,11 @@ public class World implements IWorldAccess {
     }
 
     public boolean isChunkLoaded(int x, int z) {
-        long chunkIndex = (long) x & 4294967295L | ((long) z & 4294967295L) << 32;
+        long chunkIndex = x & 4294967295L | (z & 4294967295L) << 32;
         return this.chunks.containsKey(chunkIndex);
     }
 
-    public boolean isChunkLoadedAt(int x, int y, int z) {
+    public boolean isChunkLoadedAt(int x, int z) {
         return this.isChunkLoaded(x >> 4, z >> 4);
     }
 

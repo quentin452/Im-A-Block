@@ -135,7 +135,7 @@ public final class WorldGenerator {
             int absoluteZ = chunkZ * ChunkSection.SIZE + z;
 
             // Use noise for a forest pattern
-            double perlin = this.forestNoise.perlin(absoluteX * 10, absoluteZ * 10);
+            double perlin = this.forestNoise.perlin((double)absoluteX * 10, (double)absoluteZ * 10);
             if (perlin > 0 && this.random.nextInt(2) == 0) {
 
                 // Get highest block at this position

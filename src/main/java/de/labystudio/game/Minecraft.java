@@ -39,7 +39,6 @@ public class Minecraft extends Game {
     public int displayWidth = DEFAULT_WIDTH;
     public int displayHeight = DEFAULT_HEIGHT;
     protected boolean fullscreen;
-    protected boolean enableVsync;
 
     // Player
     private Player player;
@@ -49,18 +48,18 @@ public class Minecraft extends Game {
     private boolean paused = false;
     private boolean running = true;
     private int fps;
-    private GLContext glContext;
+    //  private GLContext glContext;
 
     public Minecraft() {
         this.game = this;
-        glContext = new GLContext();
+        // glContext = new GLContext();
     }
     public void init() throws LWJGLException, IOException {
         // Make the OpenGL context current
         Display.makeCurrent();
 
         // Get the best available resolution from the display
-        DisplayMode desktopDisplayMode = Display.getDesktopDisplayMode();
+        //DisplayMode desktopDisplayMode = Display.getDesktopDisplayMode();
         this.displayWidth = Display.getWidth();
         this.displayHeight = Display.getWidth();
 
@@ -87,27 +86,24 @@ public class Minecraft extends Game {
     }
 
     public void run() {
-
         try {
-            // Initialize game before calling init
             this.init();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(0);
-        }
 
-        long lastTime = System.currentTimeMillis();
-        int frames = 0;
-        try {
+            long lastTime = System.currentTimeMillis();
+            int frames = 0;
+
             do {
                 this.timer.advanceTime();
                 for (int i = 0; i < this.timer.ticks; i++) {
                     this.tick();
                 }
 
+                // Limit framerate
+                //Thread.sleep(5L);
+
                 GL11.glViewport(0, 0, this.game.displayWidth, this.game.displayHeight);
                 this.render(this.timer.partialTicks);
-                this.update();
+                this.game.update();
                 checkError();
 
                 frames++;
@@ -126,22 +122,25 @@ public class Minecraft extends Game {
 
                 // Toggle fullscreen
                 if (Keyboard.isKeyDown(87)) {
-                    this.toggleFullscreen();
+                    this.game.toggleFullscreen();
                 }
 
             } while (!Display.isCloseRequested() && this.running);
         } catch (Exception e) {
             e.printStackTrace();
+            // Log the exception or perform other error handling here
         } finally {
             // Shutdown
-            this.world.save();
-            this.game.destroy();
-
-            Mouse.destroy();
-            Keyboard.destroy();
-
-            System.exit(0);
+            cleanup();
         }
+    }
+
+    private void cleanup() {
+        this.world.save();
+        this.game.destroy();
+
+        Mouse.destroy();
+        Keyboard.destroy();
     }
 
     public void shutdown() {
@@ -212,30 +211,25 @@ public class Minecraft extends Game {
             }
 
             // Place block
-            if ((Mouse.getEventButton() == 1) && (Mouse.getEventButtonState())) {
-                if (hitResult != null) {
+            if ((Mouse.getEventButton() == 1) && (Mouse.getEventButtonState()) && (hitResult != null)) {
                     int x = hitResult.x + hitResult.face.x;
                     int y = hitResult.y + hitResult.face.y;
                     int z = hitResult.z + hitResult.face.z;
 
-                    BoundingBox placedBoundingBox = new BoundingBox(x, y, z, x + 1, y + 1, z + 1);
+                    BoundingBox placedBoundingBox = new BoundingBox(x, y, z, (double)x+ 1, (double)y + 1, (double)z + 1);
 
                     // Don't place blocks if the player is standing there
                     if (!placedBoundingBox.intersects(this.player.boundingBox)) {
                         this.world.setBlockAt(x, y, z, this.pickedBlock.getId());
                     }
-
-                }
             }
 
             // Pick block
-            if ((Mouse.getEventButton() == 2) && (Mouse.getEventButtonState())) {
-                if (hitResult != null) {
+            if ((Mouse.getEventButton() == 2) && (Mouse.getEventButtonState()) && (hitResult != null)) {
                     short typeId = this.world.getBlockAt(hitResult.x, hitResult.y, hitResult.z);
                     if (typeId != 0) {
                         this.pickedBlock = Block.getById(typeId);
                     }
-                }
             }
         }
         while (Keyboard.next()) {
@@ -302,7 +296,7 @@ public class Minecraft extends Game {
         GL11.glColor4f(0.0F, 0.0F, 0.0F, 1.0F);
         GL11.glLineWidth(1);
         this.worldRenderer.getBlockRenderer().drawBoundingBox(hitResult.x, hitResult.y, hitResult.z,
-                hitResult.x + 1, hitResult.y + 1, hitResult.z + 1);
+                (double)hitResult.x + 1, (double)hitResult.y + 1, (double)hitResult.z + 1);
     }
 
     private HitResult getTargetBlock() {
@@ -369,7 +363,7 @@ public class Minecraft extends Game {
             }
 
             // Get the best available resolution from the display
-            org.lwjgl.opengl.DisplayMode desktopDisplayMode = Display.getDesktopDisplayMode();
+            //org.lwjgl.opengl.DisplayMode desktopDisplayMode = Display.getDesktopDisplayMode();
             int displayWidth = Display.getWidth();
             int displayHeight = Display.getWidth();
 
@@ -411,6 +405,7 @@ public class Minecraft extends Game {
         run();
     }
 
+    @Override
     public void resize(int width, int height) {
         if (width <= 0) {
             width = 1;
@@ -434,31 +429,17 @@ public class Minecraft extends Game {
     }
 
     private static String getGLErrorString(int error) {
-        String errorMessage;
-        switch (error) {
-            case GL20.GL_INVALID_ENUM:
-                errorMessage = "GL_INVALID_ENUM";
-                break;
-            case GL20.GL_INVALID_VALUE:
-                errorMessage = "GL_INVALID_VALUE";
-                break;
-            case GL20.GL_INVALID_OPERATION:
-                errorMessage = "GL_INVALID_OPERATION";
-                break;
-            case GL20.GL_INVALID_FRAMEBUFFER_OPERATION:
-                errorMessage = "GL_INVALID_FRAMEBUFFER_OPERATION";
-                break;
-            case GL20.GL_OUT_OF_MEMORY:
-                errorMessage = "GL_OUT_OF_MEMORY";
-                break;
-            default:
-                errorMessage = "Unknown error";
-                break;
-        }
-        return errorMessage;
+        return switch (error) {
+            case GL20.GL_INVALID_ENUM -> "GL_INVALID_ENUM";
+            case GL20.GL_INVALID_VALUE -> "GL_INVALID_VALUE";
+            case GL20.GL_INVALID_OPERATION -> "GL_INVALID_OPERATION";
+            case GL20.GL_INVALID_FRAMEBUFFER_OPERATION -> "GL_INVALID_FRAMEBUFFER_OPERATION";
+            case GL20.GL_OUT_OF_MEMORY -> "GL_OUT_OF_MEMORY";
+            default -> "Unknown error";
+        };
     }
 
-    public static void main(String[] args) throws LWJGLException {
+    public static void main(String[] args) {
         // Set library path if not available
         if (System.getProperty("org.lwjgl.librarypath") == null) {
             System.setProperty("org.lwjgl.librarypath", new File("run/natives").getAbsolutePath());

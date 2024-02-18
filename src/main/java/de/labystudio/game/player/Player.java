@@ -32,8 +32,6 @@ public class Player {
 
     public float jumpMovementFactor = 0.02F;
     protected float speedInAir = 0.02F;
-    private final float flySpeed = 0.05F;
-    private final float stepHeight = 0.5F;
 
     float moveForward;
     float moveStrafing;
@@ -167,7 +165,7 @@ public class Player {
         this.jumpMovementFactor = this.speedInAir;
 
         if (this.sprinting) {
-            this.jumpMovementFactor = (float) ((double) this.jumpMovementFactor + (double) this.speedInAir * 0.3D);
+            this.jumpMovementFactor = (float) (this.jumpMovementFactor + this.speedInAir * 0.3D);
 
             if (this.moveForward <= 0 || this.collision || this.sneaking) {
                 this.sprinting = false;
@@ -197,19 +195,20 @@ public class Player {
 
     private void travelFlying(float forward, float vertical, float strafe) {
         // Fly move up and down
+        float flySpeed = 0.05F;
         if (this.sneaking) {
             this.moveStrafing = strafe / 0.3F;
             this.moveForward = forward / 0.3F;
-            this.motionY -= this.flySpeed * 3.0F;
+            this.motionY -= flySpeed * 3.0F;
         }
 
         if (this.jumping) {
-            this.motionY += this.flySpeed * 3.0F;
+            this.motionY += flySpeed * 3.0F;
         }
 
         double prevMotionY = this.motionY;
         float prevJumpMovementFactor = this.jumpMovementFactor;
-        this.jumpMovementFactor = this.flySpeed * (this.sprinting ? 2 : 1);
+        this.jumpMovementFactor = flySpeed * (this.sprinting ? 2 : 1);
 
         this.travel(forward, vertical, strafe);
 
@@ -324,20 +323,18 @@ public class Player {
         if ((Keyboard.isKeyDown(57)) || (Keyboard.isKeyDown(219))) { // Space
             jumping = true;
         }
-        if (Keyboard.isKeyDown(42)) { // Shift
-            if (this.moveForward > 0 && !this.sneaking && !this.sprinting && this.motionX != 0 && this.motionZ != 0) {
+        if (Keyboard.isKeyDown(42) && (this.moveForward > 0 && !this.sneaking && !this.sprinting && this.motionX != 0 && this.motionZ != 0)) {
                 this.sprinting = true;
 
                 this.updateFOVModifier();
-            }
         }
         if (Keyboard.isKeyDown(16)) { // Q
             sneaking = true;
         }
 
         if (sneaking) {
-            moveStrafe = (float) ((double) moveStrafe * 0.3D);
-            moveForward = (float) ((double) moveForward * 0.3D);
+            moveStrafe = (float) (moveStrafe * 0.3D);
+            moveForward = (float) (moveForward * 0.3D);
         }
 
         this.moveForward = moveForward;
@@ -355,7 +352,8 @@ public class Player {
         double originalTargetZ = targetZ;
 
         if (this.onGround && this.sneaking) {
-            for (; targetX != 0.0D && this.world.getCollisionBoxes(this.boundingBox.offset(targetX, -this.stepHeight, 0.0D)).isEmpty(); originalTargetX = targetX) {
+            float stepHeight = 0.5F;
+            for (; targetX != 0.0D && this.world.getCollisionBoxes(this.boundingBox.offset(targetX, -stepHeight, 0.0D)).isEmpty(); originalTargetX = targetX) {
                 if (targetX < 0.05D && targetX >= -0.05D) {
                     targetX = 0.0D;
                 } else if (targetX > 0.0D) {
@@ -365,7 +363,7 @@ public class Player {
                 }
             }
 
-            for (; targetZ != 0.0D && this.world.getCollisionBoxes(this.boundingBox.offset(0.0D, -this.stepHeight, targetZ)).isEmpty(); originalTargetZ = targetZ) {
+            for (; targetZ != 0.0D && this.world.getCollisionBoxes(this.boundingBox.offset(0.0D, -stepHeight, targetZ)).isEmpty(); originalTargetZ = targetZ) {
                 if (targetZ < 0.05D && targetZ >= -0.05D) {
                     targetZ = 0.0D;
                 } else if (targetZ > 0.0D) {
@@ -375,7 +373,7 @@ public class Player {
                 }
             }
 
-            for (; targetX != 0.0D && targetZ != 0.0D && this.world.getCollisionBoxes(this.boundingBox.offset(targetX, -this.stepHeight, targetZ)).isEmpty(); originalTargetZ = targetZ) {
+            for (; targetX != 0.0D && targetZ != 0.0D && this.world.getCollisionBoxes(this.boundingBox.offset(targetX, -stepHeight, targetZ)).isEmpty(); originalTargetZ = targetZ) {
                 if (targetX < 0.05D && targetX >= -0.05D) {
                     targetX = 0.0D;
                 } else if (targetX > 0.0D) {
@@ -465,7 +463,7 @@ public class Player {
         long timePassed = System.currentTimeMillis() - this.timeFovChanged;
         float distance = this.prevFovModifier - this.fovModifier;
         long duration = 100;
-        float progress = distance / (float) duration * timePassed;
+        float progress = distance / duration * timePassed;
         return timePassed > duration ? this.fovModifier : this.prevFovModifier - progress;
     }
 

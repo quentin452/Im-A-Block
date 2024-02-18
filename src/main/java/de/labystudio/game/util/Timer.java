@@ -59,6 +59,11 @@ public class Timer {
         long now = System.nanoTime();
         long passedNs = now - this.lastTime;
 
+        // Check for zero
+        if(passedNs == 0) {
+            passedNs = 1;
+        }
+
         // Store nano time of this update
         this.lastTime = now;
 
@@ -67,7 +72,7 @@ public class Timer {
         passedNs = Math.min(MAX_NS_PER_UPDATE, passedNs);
 
         // Calculate fps
-        this.fps = (float) (NS_PER_SECOND / passedNs);
+        this.fps = ((float) NS_PER_SECOND / passedNs);
 
         // Calculate passed time and ticks
         this.passedTime += passedNs * this.timeScale * this.ticksPerSecond / NS_PER_SECOND;

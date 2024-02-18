@@ -280,23 +280,23 @@ public class Frustum {
 
     public boolean cubeInFrustum(ChunkSection chunkSection) {
         return this.cubeInFrustum(
-                chunkSection.x * ChunkSection.SIZE,
-                chunkSection.y * ChunkSection.SIZE,
-                chunkSection.z * ChunkSection.SIZE,
-                chunkSection.x * ChunkSection.SIZE + ChunkSection.SIZE,
-                chunkSection.y * ChunkSection.SIZE + ChunkSection.SIZE,
-                chunkSection.z * ChunkSection.SIZE + ChunkSection.SIZE
+                (float)chunkSection.x * ChunkSection.SIZE,
+                (float)chunkSection.y * ChunkSection.SIZE,
+                (float)chunkSection.z * ChunkSection.SIZE,
+                chunkSection.x *(float) ChunkSection.SIZE + ChunkSection.SIZE,
+                chunkSection.y *(float) ChunkSection.SIZE + ChunkSection.SIZE,
+                chunkSection.z *(float) ChunkSection.SIZE + ChunkSection.SIZE
         );
     }
 
     public boolean cubeInFrustum(Chunk chunk) {
         return this.cubeInFrustum(
-                chunk.getX() * ChunkSection.SIZE,
+                (float)chunk.getX() * ChunkSection.SIZE,
                 0,
-                chunk.getZ() * ChunkSection.SIZE,
-                chunk.getX() * ChunkSection.SIZE + ChunkSection.SIZE,
+                (float)chunk.getZ() * ChunkSection.SIZE,
+                chunk.getX() * (float)ChunkSection.SIZE + ChunkSection.SIZE,
                 World.TOTAL_HEIGHT,
-                chunk.getZ() * ChunkSection.SIZE + ChunkSection.SIZE
+                chunk.getZ() * (float)ChunkSection.SIZE + ChunkSection.SIZE
         );
     }
 }

@@ -8,9 +8,7 @@ import org.lwjgl.opengl.GL11;
 public class GuiRenderer {
 
     private int textureId;
-    private final int zLevel = 0;
 
-    private int scaleFactor;
     private int width;
     private int height;
 
@@ -21,10 +19,11 @@ public class GuiRenderer {
     public void init(Minecraft gameWindow) {
         this.width = gameWindow.displayWidth;
         this.height = gameWindow.displayHeight;
-        for (this.scaleFactor = 1; this.width / (this.scaleFactor + 1) >= 320 && this.height / (this.scaleFactor + 1) >= 240; this.scaleFactor++) {
+        int scaleFactor;
+        for (scaleFactor = 1; this.width / (scaleFactor + 1) >= 320 && this.height / (scaleFactor + 1) >= 240; scaleFactor++) {
         }
-        this.width = this.width / this.scaleFactor;
-        this.height = this.height / this.scaleFactor;
+        this.width = this.width / scaleFactor;
+        this.height = this.height / scaleFactor;
     }
 
     public void setupCamera() {
@@ -64,9 +63,10 @@ public class GuiRenderer {
         float factorX = 1.0F / bitMapWidth;
         float factorY = 1.0F / bitmapHeight;
 
-        tessellator.addVertexWithUV(x, y + height, this.zLevel, u * factorX, (v + vHeight) * factorY);
-        tessellator.addVertexWithUV(x + width, y + height, this.zLevel, (u + uWidth) * factorX, (v + vHeight) * factorY);
-        tessellator.addVertexWithUV(x + width, y, this.zLevel, (u + uWidth) * factorX, v * factorY);
-        tessellator.addVertexWithUV(x, y, this.zLevel, u * factorX, v * factorY);
+        int zLevel = 0;
+        tessellator.addVertexWithUV(x, (double)y + height, zLevel, u * factorX, (v + vHeight) * factorY);
+        tessellator.addVertexWithUV((double)x + width, (double)y + height, zLevel, (u + uWidth) * factorX, (v + vHeight) * factorY);
+        tessellator.addVertexWithUV((double)x + width, y, zLevel, (u + uWidth) * factorX, v * factorY);
+        tessellator.addVertexWithUV(x, y, zLevel, u * factorX, v * factorY);
     }
 }

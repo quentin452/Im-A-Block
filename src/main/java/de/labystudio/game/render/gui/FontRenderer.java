@@ -7,6 +7,7 @@ import org.lwjgl.opengl.GL11;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.Objects;
 
 public class FontRenderer {
 
@@ -24,7 +25,7 @@ public class FontRenderer {
     public FontRenderer(GuiRenderer gui, String name) throws IOException {
         this.gui = gui;
 
-        BufferedImage bitMap = ImageIO.read(TextureManager.class.getResourceAsStream(name));
+        BufferedImage bitMap = ImageIO.read(Objects.requireNonNull(TextureManager.class.getResourceAsStream(name)));
 
         // Calculate character width
         for (int i = 0; i < 128; i++) {

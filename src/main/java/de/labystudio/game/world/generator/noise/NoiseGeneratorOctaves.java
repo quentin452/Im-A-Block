@@ -19,7 +19,7 @@ public final class NoiseGeneratorOctaves extends NoiseGenerator {
     }
 
     @Override
-    public final double perlin(double x, double z) {
+    public double perlin(double x, double z) {
         double total = 0.0;
         double frequency = 1.0;
         for (int i = 0; i < this.octaves; ++i) {

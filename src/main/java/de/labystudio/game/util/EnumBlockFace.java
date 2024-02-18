@@ -8,9 +8,9 @@ public enum EnumBlockFace {
     SOUTH(1, 0, 0),
     WEST(0, 0, 1);
 
-    public int x;
-    public int y;
-    public int z;
+    public final int x;
+    public final int y;
+    public final int z;
 
     EnumBlockFace(int x, int y, int z) {
         this.x = x;

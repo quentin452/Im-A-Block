@@ -1,5 +1,6 @@
 package de.labystudio.game.render;
 
+import org.lwjgl.opengl.ARBBufferObject;
 import org.lwjgl.opengl.ARBVertexBufferObject;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
@@ -57,7 +58,7 @@ public class Tessellator {
 
         if (this.useVBO) {
             this.vertexBuffers = GLAllocation.createDirectIntBuffer(this.vboCount);
-            ARBVertexBufferObject.glGenBuffersARB(this.vertexBuffers);
+            ARBBufferObject.glGenBuffersARB(this.vertexBuffers);
         }
     }
 
@@ -75,8 +76,8 @@ public class Tessellator {
 
             if (this.useVBO) {
                 this.vboIndex = (this.vboIndex + 1) % this.vboCount;
-                ARBVertexBufferObject.glBindBufferARB(ARBVertexBufferObject.GL_ARRAY_BUFFER_ARB, this.vertexBuffers.get(this.vboIndex));
-                ARBVertexBufferObject.glBufferDataARB(ARBVertexBufferObject.GL_ARRAY_BUFFER_ARB, this.byteBuffer, 35040);
+                ARBBufferObject.glBindBufferARB(ARBVertexBufferObject.GL_ARRAY_BUFFER_ARB, this.vertexBuffers.get(this.vboIndex));
+                ARBBufferObject.glBufferDataARB(ARBVertexBufferObject.GL_ARRAY_BUFFER_ARB, this.byteBuffer, 35040);
             }
             if (this.hasTexture) {
                 if (this.useVBO) {
@@ -272,11 +273,11 @@ public class Tessellator {
     public void setNormal(float x, float y, float z) {
         this.hasNormals = true;
 
-        byte xByte = (byte) (int) (x * 128F);
-        byte yByte = (byte) (int) (y * 127F);
-        byte zByte = (byte) (int) (z * 127F);
+        byte xByte = (byte) ((int) (x * 128F) & 0xFF);
+        byte yByte = (byte) ((int) (y * 127F) & 0xFF);
+        byte zByte = (byte) ((int) (z * 127F) & 0xFF);
 
-        this.normal = xByte | yByte << 8 | zByte << 16;
+        this.normal = xByte | (yByte << 8 & 0xFF00) | (zByte << 16 & 0xFF0000);
     }
 
     public void setTranslationD(double xOffset, double yOffset, double zOffset) {

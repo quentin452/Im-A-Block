@@ -19,7 +19,7 @@ public class ChunkSection {
     public int y;
     public int z;
 
-    private int lists = -1;
+    private final int lists;
     private boolean queuedForRebuild = true;
 
     public ChunkSection(World world, int x, int y, int z) {
