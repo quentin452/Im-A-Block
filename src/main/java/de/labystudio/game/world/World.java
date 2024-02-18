@@ -1,5 +1,7 @@
 package de.labystudio.game.world;
 
+import de.labystudio.game.libraries.agrona.collections.Long2ObjectHashMap;
+import de.labystudio.game.libraries.agrona.collections.Object2ObjectHashMap;
 import de.labystudio.game.render.world.IWorldAccess;
 import de.labystudio.game.util.BoundingBox;
 import de.labystudio.game.util.EnumBlockFace;
@@ -17,7 +19,7 @@ import java.util.*;
 public class World implements IWorldAccess {
 
     public static final int TOTAL_HEIGHT = ChunkSection.SIZE * 16 - 1;
-    public Map<Long, Chunk> chunks = new HashMap<>();
+    public Long2ObjectHashMap<Chunk> chunks = new Long2ObjectHashMap<>();
 
     public boolean updateLightning = false;
     private final ArrayDeque<Long> lightUpdateQueue = new ArrayDeque<>();
@@ -283,16 +285,7 @@ public class World implements IWorldAccess {
 
     public Chunk getChunkAt(int x, int z) {
         long chunkIndex = Chunk.getIndex(x, z);
-        Chunk chunk = this.chunks.get(chunkIndex);
-        if (chunk == null) {
-            chunk = new Chunk(this, x, z);
-
-            // Copy map because of ConcurrentModificationException
-            Map<Long, Chunk> chunks = new HashMap<>(this.chunks);
-            chunks.put(chunkIndex, chunk);
-            this.chunks = chunks;
-        }
-        return chunk;
+        return this.chunks.computeIfAbsent(chunkIndex, key -> new Chunk(this, x, z));
     }
 
     public boolean isChunkLoaded(int x, int z) {

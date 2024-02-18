@@ -12,8 +12,8 @@ public class ChunkSection {
 
     public final World world;
 
-    private final byte[] blocks = new byte[(SIZE * SIZE + SIZE) * SIZE + SIZE];
-    private final byte[] blockLight = new byte[(SIZE * SIZE + SIZE) * SIZE + SIZE];
+    private final byte[] blockData = new byte[SIZE * SIZE * SIZE];
+    private final byte[] blockLight = new byte[SIZE * SIZE * SIZE];
 
     public int x;
     public int y;
@@ -24,11 +24,9 @@ public class ChunkSection {
 
     public ChunkSection(World world, int x, int y, int z) {
         this.world = world;
-
         this.x = x;
         this.y = y;
         this.z = z;
-
         this.lists = GL11.glGenLists(EnumWorldBlockLayer.values().length);
 
         // Fill chunk with light
@@ -89,7 +87,7 @@ public class ChunkSection {
 
                 for (int z = 0; z < SIZE; z++) {
                     int absoluteZ = baseZ + z;
-                    short typeId = getBlockAt(x, y, z);
+                    byte typeId = getBlockAt(x, y, z);
 
                     if (typeId != 0) {
                         Block block = Block.getById(typeId);
@@ -110,7 +108,7 @@ public class ChunkSection {
     }
 
     public boolean isEmpty() {
-        for (byte block : blocks) {
+        for (byte block : blockData) {
             if (block != 0) {
                 return false;
             }
@@ -124,7 +122,7 @@ public class ChunkSection {
 
     public byte getBlockAt(int x, int y, int z) {
         int index = y << 8 | z << 4 | x;
-        return this.blocks[index];
+        return blockData[index];
     }
 
     public void setLightAt(int x, int y, int z, int lightLevel) {
@@ -133,12 +131,12 @@ public class ChunkSection {
     }
 
     public void setBlockAt(int x, int y, int z, int type) {
-        int index = (y << 8) | (z << 4) | x;
-        this.blocks[index] = (byte) type;
+        int index = y << 8 | z << 4 | x;
+        this.blockData[index] = (byte) type;
     }
 
     public int getLightAt(int x, int y, int z) {
         int index = y << 8 | z << 4 | x;
-        return this.blockLight[index];
+        return blockLight[index];
     }
 }
