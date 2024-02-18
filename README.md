@@ -31,7 +31,7 @@ This project was ported to javascript here: [js-minecraft](https://github.com/La
 
 ### Setup
 - Clone the project
-- Set your working directory to ``./run``
+- Open the project folder with IntelliJ IDEA USING JAVA 17
 - Run main class ``de.labystudio.game.Minecraft``
 - Wait a few seconds for the world generation
 
