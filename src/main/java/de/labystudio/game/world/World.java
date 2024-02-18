@@ -147,13 +147,15 @@ public class World implements IWorldAccess {
     public void setBlockAt(int x, int y, int z, int type) {
         ChunkSection chunkSection = this.getChunkAtBlock(x, y, z);
         if (chunkSection != null) {
-            chunkSection.setBlockAt(x & 15, y & 15, z & 15, type);
+            if (chunkSection.getBlockAt(x & 15, y & 15, z & 15) != type) {
+                chunkSection.setBlockAt(x & 15, y & 15, z & 15, type);
 
-            if (this.updateLightning) {
-                this.updateBlockLightAt(x, y, z);
+                if (this.updateLightning) {
+                    this.updateBlockLightAt(x, y, z);
+                }
+
+                this.blockChanged(x, y, z);
             }
-
-            this.blockChanged(x, y, z);
         }
     }
 

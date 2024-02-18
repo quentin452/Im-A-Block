@@ -305,6 +305,7 @@ public class Player {
         boolean jumping = false;
         boolean sneaking = false;
 
+        // controls #todo important
         if (Keyboard.isKeyDown(19)) { // R
             this.resetPos();
         }

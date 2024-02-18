@@ -1,6 +1,6 @@
 package de.labystudio.game.render.gui;
 
-import de.labystudio.game.MinecraftWindow;
+import de.labystudio.game.Minecraft;
 import de.labystudio.game.render.Tessellator;
 import de.labystudio.game.util.TextureManager;
 import org.lwjgl.opengl.GL11;
@@ -18,7 +18,7 @@ public class GuiRenderer {
         this.textureId = TextureManager.loadTexture("/icons.png", GL11.GL_NEAREST);
     }
 
-    public void init(MinecraftWindow gameWindow) {
+    public void init(Minecraft gameWindow) {
         this.width = gameWindow.displayWidth;
         this.height = gameWindow.displayHeight;
         for (this.scaleFactor = 1; this.width / (this.scaleFactor + 1) >= 320 && this.height / (this.scaleFactor + 1) >= 240; this.scaleFactor++) {

@@ -1,6 +1,7 @@
 package de.labystudio.game.util;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL30;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -9,7 +10,6 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.util.glu.GLU.gluBuild2DMipmaps;
 
 public class TextureManager {
     private static int lastId = Integer.MIN_VALUE;
@@ -62,8 +62,10 @@ public class TextureManager {
             ByteBuffer byteBuffer = BufferUtils.createByteBuffer(width * height * 4);
             byteBuffer.asIntBuffer().put(pixels);
 
-            // Write texture to opengl
-            gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, width, height, GL_RGBA, GL_UNSIGNED_BYTE, byteBuffer);
+            // Write texture to OpenGL
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, byteBuffer);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            GL30.glGenerateMipmap(GL_TEXTURE_2D);
         } catch (IOException exception) {
             throw new RuntimeException("Could not load texture " + resourceName, exception);
         }

@@ -132,7 +132,7 @@ public class ChunkSection {
     }
 
     public void setBlockAt(int x, int y, int z, int type) {
-        int index = y << 8 | z << 4 | x;
+        int index = (y << 8) | (z << 4) | x;
         this.blocks[index] = (byte) type;
     }
 
