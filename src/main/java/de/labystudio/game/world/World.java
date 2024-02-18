@@ -12,12 +12,7 @@ import de.labystudio.game.world.generator.WorldGenerator;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 
 public class World implements IWorldAccess {
 
@@ -25,7 +20,7 @@ public class World implements IWorldAccess {
     public Map<Long, Chunk> chunks = new HashMap<>();
 
     public boolean updateLightning = false;
-    private final Queue<Long> lightUpdateQueue = new LinkedList<>();
+    private final ArrayDeque<Long> lightUpdateQueue = new ArrayDeque<>();
 
     private final WorldGenerator generator = new WorldGenerator(this, (int) (System.currentTimeMillis() % 100000));
     public WorldFormat format = new WorldFormat(this, new File("saves/World1"));
@@ -75,10 +70,8 @@ public class World implements IWorldAccess {
     public void onTick() {
         // Light updates
         if (!this.lightUpdateQueue.isEmpty()) {
-
             // Handle 128 light updates per tick
             for (int i = 0; i < 128; i++) {
-
                 // Get next position to update
                 Long positionIndex = this.lightUpdateQueue.poll();
                 if (positionIndex != null) {
@@ -90,8 +83,8 @@ public class World implements IWorldAccess {
         }
     }
 
-    public List<BoundingBox> getCollisionBoxes(BoundingBox aabb) {
-        ArrayList<BoundingBox> boundingBoxList = new ArrayList<>();
+    public Set<BoundingBox> getCollisionBoxes(BoundingBox aabb) {
+        Set<BoundingBox> boundingBoxSet = new HashSet<>();
 
         int minX = MathHelper.floor_double(aabb.minX);
         int maxX = MathHelper.floor_double(aabb.maxX + 1.0);
@@ -104,12 +97,12 @@ public class World implements IWorldAccess {
             for (int y = minY; y < maxY; y++) {
                 for (int z = minZ; z < maxZ; z++) {
                     if (this.isSolidBlockAt(x, y, z)) {
-                        boundingBoxList.add(new BoundingBox(x, y, z, (double)x + 1, (double)y + 1, (double)z + 1));
+                        boundingBoxSet.add(new BoundingBox(x, y, z, (double) x + 1, (double) y + 1, (double) z + 1));
                     }
                 }
             }
         }
-        return boundingBoxList;
+        return boundingBoxSet;
     }
 
     public void blockChanged(int x, int y, int z) {
@@ -147,13 +140,13 @@ public class World implements IWorldAccess {
     public void setBlockAt(int x, int y, int z, int type) {
         ChunkSection chunkSection = this.getChunkAtBlock(x, y, z);
         if (chunkSection != null && (chunkSection.getBlockAt(x & 15, y & 15, z & 15) != type)) {
-                chunkSection.setBlockAt(x & 15, y & 15, z & 15, type);
+            chunkSection.setBlockAt(x & 15, y & 15, z & 15, type);
 
-                if (this.updateLightning) {
-                    this.updateBlockLightAt(x, y, z);
-                }
+            if (this.updateLightning) {
+                this.updateBlockLightAt(x, y, z);
+            }
 
-                this.blockChanged(x, y, z);
+            this.blockChanged(x, y, z);
         }
     }
 

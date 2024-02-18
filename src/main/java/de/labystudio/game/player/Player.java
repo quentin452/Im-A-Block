@@ -6,6 +6,7 @@ import de.labystudio.game.world.block.Block;
 import org.lwjgl.input.Keyboard;
 
 import java.util.List;
+import java.util.Set;
 
 public class Player {
 
@@ -395,7 +396,7 @@ public class Player {
         }
 
         // Get level tiles as bounding boxes
-        List<BoundingBox> boundingBoxList = this.world.getCollisionBoxes(this.boundingBox.expand(targetX, targetY, targetZ));
+        Set<BoundingBox> boundingBoxList = this.world.getCollisionBoxes(this.boundingBox.expand(targetX, targetY, targetZ));
 
         // Move bounding box
         for (BoundingBox aABB : boundingBoxList) {

@@ -1,5 +1,7 @@
 package de.labystudio.game.util;
 
+import java.util.Objects;
+
 public class BoundingBox {
 
     private final double epsilon = 0.0F;
@@ -253,5 +255,22 @@ public class BoundingBox {
      */
     public BoundingBox offset(double x, double y, double z) {
         return new BoundingBox(this.minX + x, this.minY + y, this.minZ + z, this.maxX + x, this.maxY + y, this.maxZ + z);
+    }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        BoundingBox that = (BoundingBox) obj;
+        return Double.compare(that.minX, minX) == 0 &&
+                Double.compare(that.minY, minY) == 0 &&
+                Double.compare(that.minZ, minZ) == 0 &&
+                Double.compare(that.maxX, maxX) == 0 &&
+                Double.compare(that.maxY, maxY) == 0 &&
+                Double.compare(that.maxZ, maxZ) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(minX, minY, minZ, maxX, maxY, maxZ);
     }
 }

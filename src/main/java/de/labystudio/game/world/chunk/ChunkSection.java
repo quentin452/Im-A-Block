@@ -66,7 +66,9 @@ public class ChunkSection {
 
     private void rebuild(WorldRenderer renderer, EnumWorldBlockLayer renderLayer) {
         // Create GPU memory list storage
-        GL11.glNewList(this.lists + renderLayer.ordinal(), GL11.GL_COMPILE);
+        int listIndex = this.lists + renderLayer.ordinal();
+        GL11.glNewList(listIndex, GL11.GL_COMPILE);
+
         GL11.glEnable(GL11.GL_TEXTURE_2D);
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, renderer.textureId);
 
@@ -74,17 +76,22 @@ public class ChunkSection {
         Tessellator tessellator = Tessellator.instance;
         tessellator.startDrawing(7);
 
+        int baseX = this.x * SIZE;
+        int baseY = this.y * SIZE;
+        int baseZ = this.z * SIZE;
+
         // Render blocks
         for (int x = 0; x < SIZE; x++) {
+            int absoluteX = baseX + x;
+
             for (int y = 0; y < SIZE; y++) {
+                int absoluteY = baseY + y;
+
                 for (int z = 0; z < SIZE; z++) {
+                    int absoluteZ = baseZ + z;
                     short typeId = getBlockAt(x, y, z);
 
                     if (typeId != 0) {
-                        int absoluteX = this.x * SIZE + x;
-                        int absoluteY = this.y * SIZE + y;
-                        int absoluteZ = this.z * SIZE + z;
-
                         Block block = Block.getById(typeId);
                         if (block != null && ((renderLayer == EnumWorldBlockLayer.CUTOUT) == block.isTransparent())) {
                             block.render(renderer, this.world, absoluteX, absoluteY, absoluteZ);
@@ -103,17 +110,11 @@ public class ChunkSection {
     }
 
     public boolean isEmpty() {
-        for (int x = 0; x < SIZE; x++) {
-            for (int y = 0; y < SIZE; y++) {
-                for (int z = 0; z < SIZE; z++) {
-                    int index = y << 8 | z << 4 | x;
-                    if (this.blocks[index] != 0) {
-                        return false;
-                    }
-                }
+        for (byte block : blocks) {
+            if (block != 0) {
+                return false;
             }
         }
-
         return true;
     }
 
