@@ -7,6 +7,8 @@ import de.labystudio.game.world.WorldRenderer;
 import de.labystudio.game.world.block.Block;
 import org.lwjgl.opengl.GL11;
 
+import java.util.Arrays;
+
 public class ChunkSection {
     public static final int SIZE = 16;
 
@@ -29,17 +31,9 @@ public class ChunkSection {
         this.z = z;
         this.lists = GL11.glGenLists(EnumWorldBlockLayer.values().length);
 
-        // Fill chunk with light
-        for (int lightX = 0; lightX < SIZE; lightX++) {
-            for (int lightY = 0; lightY < SIZE; lightY++) {
-                for (int lightZ = 0; lightZ < SIZE; lightZ++) {
-                    int index = lightY << 8 | lightZ << 4 | lightX;
-                    this.blockLight[index] = 15;
-                }
-            }
-        }
+        // Fill chunk with light using Arrays.fill
+        Arrays.fill(this.blockLight, (byte) 15);
     }
-
     public void render(EnumWorldBlockLayer renderLayer) {
         // Call list with render layer
         GL11.glCallList(this.lists + renderLayer.ordinal());
