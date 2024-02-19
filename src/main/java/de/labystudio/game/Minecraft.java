@@ -5,6 +5,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.utils.BufferUtils;
 import de.labystudio.game.player.Player;
 import de.labystudio.game.render.gui.FontRenderer;
 import de.labystudio.game.render.gui.GuiRenderer;
@@ -17,13 +19,11 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
-import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GLContext;
-import org.lwjgl.util.glu.GLU;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.FloatBuffer;
 
 public class Minecraft extends Game {
 
@@ -176,7 +176,15 @@ public class Minecraft extends Game {
         // Calculate the aspect ratio
         float aspectRatio = (float) this.game.displayWidth / (float) this.game.displayHeight;
 
-        GLU.gluPerspective(85.0F + this.player.getFOVModifier(), aspectRatio, 0.05F, (float) zFar);
+        // Create a new perspective projection matrix
+        Matrix4 projection = new Matrix4();
+        projection.setToProjection(0.05f, (float) zFar, 85.0F + this.player.getFOVModifier(), aspectRatio);
+
+        // Convert the matrix to a FloatBuffer using LibGDX's BufferUtils
+        FloatBuffer matrixBuffer = BufferUtils.newFloatBuffer(16);
+        matrixBuffer.put(projection.val).flip();
+
+        GL11.glLoadMatrix(matrixBuffer);
 
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glLoadIdentity();

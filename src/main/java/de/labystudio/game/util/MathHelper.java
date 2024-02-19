@@ -10,4 +10,27 @@ public class MathHelper {
         return value < i ? i - 1 : i;
     }
 
+    /**
+     * Linearly interpolates between two values.
+     *
+     * @param start   The starting value.
+     * @param end     The ending value.
+     * @param percent The interpolation factor (between 0.0 and 1.0).
+     * @return The interpolated value.
+     */
+    public static float lerp(float start, float end, float percent) {
+        return start + percent * (end - start);
+    }
+
+    /**
+     * Linearly interpolates between two values.
+     *
+     * @param start   The starting value.
+     * @param end     The ending value.
+     * @param percent The interpolation factor (between 0.0 and 1.0).
+     * @return The interpolated value.
+     */
+    public static double lerp(double start, double end, double percent) {
+        return start + percent * (end - start);
+    }
 }

@@ -22,10 +22,6 @@ dependencies {
 
     implementation 'org.joml:joml:1.10.5'
 
-    implementation group: 'org.lwjgl.lwjgl', name: 'lwjgl', version: '2.9.3'
-    implementation group: 'org.lwjgl.lwjgl', name: 'lwjgl_util', version: '2.9.3'
-    implementation group: 'org.lwjgl.lwjgl', name: 'lwjgl-platform', version: '2.9.3', ext: 'pom'
-
     implementation 'it.unimi.dsi:fastutil:8.5.12'
 
     //NBT
