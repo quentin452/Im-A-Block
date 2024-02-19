@@ -1,7 +1,5 @@
 package de.labystudio.game.world;
 
-import de.labystudio.game.libraries.agrona.collections.Long2ObjectHashMap;
-import de.labystudio.game.libraries.agrona.collections.Object2ObjectHashMap;
 import de.labystudio.game.render.world.IWorldAccess;
 import de.labystudio.game.util.BoundingBox;
 import de.labystudio.game.util.EnumBlockFace;
@@ -11,15 +9,18 @@ import de.labystudio.game.world.chunk.Chunk;
 import de.labystudio.game.world.chunk.ChunkSection;
 import de.labystudio.game.world.chunk.format.WorldFormat;
 import de.labystudio.game.world.generator.WorldGenerator;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.HashSet;
+import java.util.Set;
 
 public class World implements IWorldAccess {
 
     public static final int TOTAL_HEIGHT = ChunkSection.SIZE * 16 - 1;
-    public Long2ObjectHashMap<Chunk> chunks = new Long2ObjectHashMap<>();
+    public Long2ObjectOpenHashMap<Chunk> chunks = new Long2ObjectOpenHashMap<>();
 
     public boolean updateLightning = false;
     private final ArrayDeque<Long> lightUpdateQueue = new ArrayDeque<>();
