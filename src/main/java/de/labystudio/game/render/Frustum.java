@@ -247,25 +247,17 @@ public class Frustum {
         // This is rare and shouldn't effect the overall rendering speed.
 
         for (int i = 0; i < 6; i++) {
-            if (this.m_Frustum[i][A] * minX + this.m_Frustum[i][B] * minY + this.m_Frustum[i][C] * minZ + this.m_Frustum[i][D] > 0)
-                continue;
-            if (this.m_Frustum[i][A] * maxX + this.m_Frustum[i][B] * minY + this.m_Frustum[i][C] * minZ + this.m_Frustum[i][D] > 0)
-                continue;
-            if (this.m_Frustum[i][A] * minX + this.m_Frustum[i][B] * maxY + this.m_Frustum[i][C] * minZ + this.m_Frustum[i][D] > 0)
-                continue;
-            if (this.m_Frustum[i][A] * maxX + this.m_Frustum[i][B] * maxY + this.m_Frustum[i][C] * minZ + this.m_Frustum[i][D] > 0)
-                continue;
-            if (this.m_Frustum[i][A] * minX + this.m_Frustum[i][B] * minY + this.m_Frustum[i][C] * maxZ + this.m_Frustum[i][D] > 0)
-                continue;
-            if (this.m_Frustum[i][A] * maxX + this.m_Frustum[i][B] * minY + this.m_Frustum[i][C] * maxZ + this.m_Frustum[i][D] > 0)
-                continue;
-            if (this.m_Frustum[i][A] * minX + this.m_Frustum[i][B] * maxY + this.m_Frustum[i][C] * maxZ + this.m_Frustum[i][D] > 0)
-                continue;
-            if (this.m_Frustum[i][A] * maxX + this.m_Frustum[i][B] * maxY + this.m_Frustum[i][C] * maxZ + this.m_Frustum[i][D] > 0)
-                continue;
-
-            // If we get here, it isn't in the frustum
-            return false;
+            if (!(this.m_Frustum[i][A] * minX + this.m_Frustum[i][B] * minY + this.m_Frustum[i][C] * minZ + this.m_Frustum[i][D] > 0 ||
+                    this.m_Frustum[i][A] * maxX + this.m_Frustum[i][B] * minY + this.m_Frustum[i][C] * minZ + this.m_Frustum[i][D] > 0 ||
+                    this.m_Frustum[i][A] * minX + this.m_Frustum[i][B] * maxY + this.m_Frustum[i][C] * minZ + this.m_Frustum[i][D] > 0 ||
+                    this.m_Frustum[i][A] * maxX + this.m_Frustum[i][B] * maxY + this.m_Frustum[i][C] * minZ + this.m_Frustum[i][D] > 0 ||
+                    this.m_Frustum[i][A] * minX + this.m_Frustum[i][B] * minY + this.m_Frustum[i][C] * maxZ + this.m_Frustum[i][D] > 0 ||
+                    this.m_Frustum[i][A] * maxX + this.m_Frustum[i][B] * minY + this.m_Frustum[i][C] * maxZ + this.m_Frustum[i][D] > 0 ||
+                    this.m_Frustum[i][A] * minX + this.m_Frustum[i][B] * maxY + this.m_Frustum[i][C] * maxZ + this.m_Frustum[i][D] > 0 ||
+                    this.m_Frustum[i][A] * maxX + this.m_Frustum[i][B] * maxY + this.m_Frustum[i][C] * maxZ + this.m_Frustum[i][D] > 0)) {
+                // If we get here, it isn't in the frustum
+                return false;
+            }
         }
 
         return true;
